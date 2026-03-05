@@ -1,0 +1,146 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 220 25% 10%;
+
+    --secondary: 220 16% 92%;
+    --secondary-foreground: 220 25% 10%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 16% 92%;
+    --accent-foreground: 220 25% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 88%;
+    --input: 220 13% 88%;
+    --ring: 38 92% 50%;
+
+    --radius: 0.5rem;
+
+    --solar: 38 92% 50%;
+    --solar-foreground: 220 25% 10%;
+    --solar-glow: 38 100% 60%;
+    --solar-dim: 38 70% 40%;
+    --navy: 220 40% 13%;
+    --navy-light: 220 30% 20%;
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 10%;
+    --info: 210 80% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 40% 13%;
+    --sidebar-foreground: 220 15% 80%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 220 25% 10%;
+    --sidebar-accent: 220 30% 20%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 220 30% 22%;
+    --sidebar-ring: 38 92% 50%;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 15% 90%;
+
+    --card: 220 25% 11%;
+    --card-foreground: 220 15% 90%;
+
+    --popover: 220 25% 11%;
+    --popover-foreground: 220 15% 90%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 220 25% 10%;
+
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 85%;
+
+    --muted: 220 20% 16%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 220 20% 18%;
+    --accent-foreground: 220 15% 90%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 20%;
+    --ring: 38 92% 50%;
+
+    --solar: 38 92% 50%;
+    --solar-foreground: 220 25% 10%;
+    --solar-glow: 38 100% 60%;
+    --solar-dim: 38 70% 40%;
+    --navy: 220 40% 13%;
+    --navy-light: 220 30% 20%;
+    --success: 152 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 25% 10%;
+    --info: 210 80% 55%;
+    --info-foreground: 0 0% 100%;
+
+    --sidebar-background: 220 30% 6%;
+    --sidebar-foreground: 220 15% 75%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 220 25% 10%;
+    --sidebar-accent: 220 25% 14%;
+    --sidebar-accent-foreground: 220 15% 90%;
+    --sidebar-border: 220 25% 14%;
+    --sidebar-ring: 38 92% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .text-gradient-solar {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(var(--solar)), hsl(var(--solar-glow)));
+  }
+
+  .bg-gradient-solar {
+    background-image: linear-gradient(135deg, hsl(var(--solar)), hsl(var(--solar-glow)));
+  }
+
+  .glow-solar {
+    box-shadow: 0 0 20px hsl(var(--solar) / 0.3), 0 0 40px hsl(var(--solar) / 0.1);
+  }
+
+  .glass {
+    @apply backdrop-blur-md bg-card/80 border border-border/50;
+  }
+}
