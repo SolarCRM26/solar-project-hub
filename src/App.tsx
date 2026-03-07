@@ -52,7 +52,6 @@ const App = () => (
                   <Route path="/admin/documents" element={<AdminDocuments />} />
                   <Route path="/admin/users" element={<AdminUsers />} />
                   <Route path="/admin/organizations" element={<AdminOrganizations />} />
-                  <Route path="/admin/clients" element={<AdminClients />} />
                   <Route path="/admin/sites" element={<AdminSites />} />
                   <Route path="/admin/checklists" element={<AdminChecklists />} />
                   <Route path="/admin/reports" element={<AdminReports />} />

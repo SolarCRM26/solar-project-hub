@@ -13,7 +13,7 @@ interface ProjectData {
 }
 
 interface ClientData {
-  name: string;
+  full_name: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -55,12 +55,12 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
   doc.setFontSize(24);
   doc.setTextColor(0, 0, 0);
   doc.text('PROJECT CLOSEOUT PACKAGE', 105, yPos, { align: 'center' });
-  
+
   yPos += 15;
   doc.setFontSize(10);
   doc.setTextColor(100, 100, 100);
   doc.text(`Generated on ${new Date().toLocaleDateString()}`, 105, yPos, { align: 'center' });
-  
+
   yPos += 15;
 
   // Project Information
@@ -68,7 +68,7 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
   doc.setTextColor(0, 0, 0);
   doc.text('Project Information', 20, yPos);
   yPos += 5;
-  
+
   doc.setLineWidth(0.5);
   doc.line(20, yPos, 190, yPos);
   yPos += 10;
@@ -115,14 +115,14 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     doc.setTextColor(0, 0, 0);
     doc.text('Client Information', 20, yPos);
     yPos += 5;
-    
+
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);
     yPos += 10;
 
     doc.setFontSize(10);
     const clientInfo = [
-      ['Client Name:', data.client.name],
+      ['Client Name:', data.client.full_name || 'N/A'],
       ['Email:', data.client.email || 'N/A'],
       ['Phone:', data.client.phone || 'N/A'],
       ['Address:', data.client.address || 'N/A'],
@@ -149,7 +149,7 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     doc.setFontSize(16);
     doc.text('Site Information', 20, yPos);
     yPos += 5;
-    
+
     doc.setLineWidth(0.5);
     doc.line(20, yPos, 190, yPos);
     yPos += 10;
@@ -158,7 +158,7 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     const siteInfo = [
       ['Site Name:', data.site.name],
       ['Address:', data.site.address],
-      ['Coordinates:', data.site.latitude && data.site.longitude ? 
+      ['Coordinates:', data.site.latitude && data.site.longitude ?
         `${data.site.latitude.toFixed(4)}, ${data.site.longitude.toFixed(4)}` : 'N/A'],
     ];
 

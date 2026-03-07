@@ -36,15 +36,37 @@ const AdminProjects = () => {
   const [form, setForm] = useState({
     name: '', description: '', project_type: 'rooftop' as string,
     stage: 'lead_created' as string, capacity_kw: '', estimated_cost: '',
-    start_date: '', target_completion: '',
+    start_date: '', target_completion: '', client_id: '',
   });
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('projects').select('*, clients(name)').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('projects').select('*, profiles!projects_client_id_fkey(full_name)').order('created_at', { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers-list'],
+    queryFn: async () => {
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'customer');
+      if (roleError) throw roleError;
+      if (!userRoles || userRoles.length === 0) return [];
+
+      const userIds = userRoles.map(ur => ur.user_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds)
+        .order('full_name');
+
+      if (profileError) throw profileError;
+      return profiles;
     },
   });
 
@@ -59,6 +81,7 @@ const AdminProjects = () => {
         estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : null,
         start_date: form.start_date || null,
         target_completion: form.target_completion || null,
+        client_id: form.client_id || null,
         created_by: user?.id,
       });
       if (error) throw error;
@@ -66,7 +89,7 @@ const AdminProjects = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setOpen(false);
-      setForm({ name: '', description: '', project_type: 'rooftop', stage: 'lead_created', capacity_kw: '', estimated_cost: '', start_date: '', target_completion: '' });
+      setForm({ name: '', description: '', project_type: 'rooftop', stage: 'lead_created', capacity_kw: '', estimated_cost: '', start_date: '', target_completion: '', client_id: '' });
       toast({ title: 'Project created' });
     },
     onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
@@ -142,6 +165,16 @@ const AdminProjects = () => {
                   <Input type="date" value={form.target_completion} onChange={e => setForm(f => ({ ...f, target_completion: e.target.value }))} />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Client (Customer User)</Label>
+                <Select value={form.client_id} onValueChange={v => setForm(f => ({ ...f, client_id: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {customers.map(c => <SelectItem key={c.user_id} value={c.user_id}>{c.full_name || c.email}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <Button type="submit" className="w-full" disabled={createProject.isPending}>
                 {createProject.isPending ? 'Creating...' : 'Create Project'}
               </Button>
@@ -181,7 +214,7 @@ const AdminProjects = () => {
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7}>
-                    <EmptyState 
+                    <EmptyState
                       icon={FolderOpen}
                       title="No projects found"
                       description="Create your first project to get started or adjust your search filters"
@@ -194,7 +227,7 @@ const AdminProjects = () => {
                 filtered.map(project => (
                   <TableRow key={project.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/projects/${project.id}`)}>
                     <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>{(project as any).clients?.name || '—'}</TableCell>
+                    <TableCell>{(project as any).profiles?.full_name || '—'}</TableCell>
                     <TableCell className="capitalize">{project.project_type?.replace('_', ' ')}</TableCell>
                     <TableCell><StageBadge stage={project.stage} /></TableCell>
                     <TableCell>{project.capacity_kw ? `${project.capacity_kw} kW` : '—'}</TableCell>

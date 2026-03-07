@@ -68,7 +68,7 @@ const CustomerDashboard = () => {
     try {
       // Fetch additional data
       const [clientRes, siteRes, docsRes, milestonesRes] = await Promise.all([
-        supabase.from('clients').select('*').eq('id', project.client_id).single(),
+        supabase.from('profiles').select('*').eq('user_id', project.client_id).single(),
         supabase.from('sites').select('*').eq('id', project.site_id).single(),
         supabase.from('documents').select('*').eq('project_id', project.id),
         supabase.from('milestones').select('*').eq('project_id', project.id),

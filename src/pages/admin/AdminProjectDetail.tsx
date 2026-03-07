@@ -52,7 +52,7 @@ const AdminProjectDetail = () => {
         .eq('id', id!)
         .single();
       if (error) throw error;
-      
+
       // Populate form
       setForm({
         name: data.name,
@@ -67,7 +67,7 @@ const AdminProjectDetail = () => {
         site_id: data.site_id || '',
         organization_id: data.organization_id || '',
       });
-      
+
       return data;
     },
     enabled: !!id,
@@ -109,12 +109,29 @@ const AdminProjectDetail = () => {
     },
   });
 
-  const { data: clients = [] } = useQuery({
-    queryKey: ['clients-list'],
+  const { data: customers = [] } = useQuery({
+    queryKey: ['customers-list'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('clients').select('id, name').order('name');
-      if (error) throw error;
-      return data;
+      // Fetch users who have the 'customer' role
+      const { data: userRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'customer');
+
+      if (roleError) throw roleError;
+
+      if (!userRoles || userRoles.length === 0) return [];
+
+      const userIds = userRoles.map(ur => ur.user_id);
+
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds)
+        .order('full_name');
+
+      if (profileError) throw profileError;
+      return profiles;
     },
   });
 
@@ -305,7 +322,7 @@ const AdminProjectDetail = () => {
                     <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">None</SelectItem>
-                      {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                      {customers.map(c => <SelectItem key={c.user_id} value={c.user_id}>{c.full_name || c.email}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

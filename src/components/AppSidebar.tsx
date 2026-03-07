@@ -29,7 +29,6 @@ const adminItems = [
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Organizations', url: '/admin/organizations', icon: Building2 },
-  { title: 'Clients', url: '/admin/clients', icon: UserCircle },
   { title: 'Sites', url: '/admin/sites', icon: MapPin },
 ];
 
