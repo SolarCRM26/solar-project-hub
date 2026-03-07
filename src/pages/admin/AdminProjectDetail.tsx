@@ -318,20 +318,20 @@ const AdminProjectDetail = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Client</Label>
-                  <Select value={form.client_id} onValueChange={v => setForm(f => ({ ...f, client_id: v }))}>
+                  <Select value={form.client_id || "none"} onValueChange={v => setForm(f => ({ ...f, client_id: v === 'none' ? '' : v }))}>
                     <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {customers.map(c => <SelectItem key={c.user_id} value={c.user_id}>{c.full_name || c.email}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Site</Label>
-                  <Select value={form.site_id} onValueChange={v => setForm(f => ({ ...f, site_id: v }))}>
+                  <Select value={form.site_id || "none"} onValueChange={v => setForm(f => ({ ...f, site_id: v === 'none' ? '' : v }))}>
                     <SelectTrigger><SelectValue placeholder="Select site" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {sites.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -447,10 +447,10 @@ const AdminProjectDetail = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>Related Stage</Label>
-                      <Select value={milestoneForm.stage} onValueChange={v => setMilestoneForm(f => ({ ...f, stage: v }))}>
+                      <Select value={milestoneForm.stage || "none"} onValueChange={v => setMilestoneForm(f => ({ ...f, stage: v === 'none' ? '' : v }))}>
                         <SelectTrigger><SelectValue placeholder="Select stage (optional)" /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {stages.map(s => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                         </SelectContent>
                       </Select>

@@ -42,7 +42,7 @@ const AdminProjects = () => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ['projects'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('projects').select('*, profiles!projects_client_id_fkey(full_name)').order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -167,10 +167,10 @@ const AdminProjects = () => {
               </div>
               <div className="space-y-2">
                 <Label>Client (Customer User)</Label>
-                <Select value={form.client_id} onValueChange={v => setForm(f => ({ ...f, client_id: v }))}>
+                <Select value={form.client_id || "none"} onValueChange={v => setForm(f => ({ ...f, client_id: v === 'none' ? '' : v }))}>
                   <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {customers.map(c => <SelectItem key={c.user_id} value={c.user_id}>{c.full_name || c.email}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -227,7 +227,7 @@ const AdminProjects = () => {
                 filtered.map(project => (
                   <TableRow key={project.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/projects/${project.id}`)}>
                     <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>{(project as any).profiles?.full_name || '—'}</TableCell>
+                    <TableCell>{customers.find(c => c.user_id === project.client_id)?.full_name || '—'}</TableCell>
                     <TableCell className="capitalize">{project.project_type?.replace('_', ' ')}</TableCell>
                     <TableCell><StageBadge stage={project.stage} /></TableCell>
                     <TableCell>{project.capacity_kw ? `${project.capacity_kw} kW` : '—'}</TableCell>
