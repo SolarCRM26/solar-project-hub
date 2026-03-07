@@ -2,8 +2,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
-const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+type AppRole = 'admin' | 'project_manager' | 'engineer' | 'qa_manager' | 'customer';
+
+interface ProtectedRouteProps {
+  allowedRoles?: AppRole[];
+}
+
+const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
+  const { user, roles, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,7 +19,13 @@ const ProtectedRoute = () => {
     );
   }
 
+  // Not logged in → go to auth
   if (!user) return <Navigate to="/auth" replace />;
+
+  // Wrong role for this section → back to index, which routes to their dashboard
+  if (allowedRoles && !allowedRoles.some(r => roles.includes(r))) {
+    return <Navigate to="/" replace />;
+  }
 
   return <Outlet />;
 };

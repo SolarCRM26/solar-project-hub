@@ -42,9 +42,9 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Index />} />
 
-              <Route element={<ProtectedRoute />}>
+              {/* Admin-only routes */}
+              <Route element={<ProtectedRoute allowedRoles={['admin', 'project_manager', 'qa_manager']} />}>
                 <Route element={<DashboardLayout />}>
-                  {/* Admin routes */}
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/projects" element={<AdminProjects />} />
                   <Route path="/admin/projects/:id" element={<AdminProjectDetail />} />
@@ -57,14 +57,22 @@ const App = () => (
                   <Route path="/admin/checklists" element={<AdminChecklists />} />
                   <Route path="/admin/reports" element={<AdminReports />} />
                   <Route path="/admin/role-requests" element={<AdminRoleRequests />} />
+                </Route>
+              </Route>
 
-                  {/* Engineer routes */}
+              {/* Engineer-only routes */}
+              <Route element={<ProtectedRoute allowedRoles={['engineer']} />}>
+                <Route element={<DashboardLayout />}>
                   <Route path="/engineer" element={<EngineerDashboard />} />
                   <Route path="/engineer/tasks" element={<EngineerTasks />} />
                   <Route path="/engineer/logs" element={<EngineerLogs />} />
                   <Route path="/engineer/photos" element={<EngineerPhotos />} />
+                </Route>
+              </Route>
 
-                  {/* Customer routes */}
+              {/* Customer-only routes */}
+              <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
+                <Route element={<DashboardLayout />}>
                   <Route path="/customer" element={<CustomerDashboard />} />
                 </Route>
               </Route>
