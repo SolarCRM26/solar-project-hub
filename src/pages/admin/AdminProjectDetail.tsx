@@ -76,12 +76,25 @@ const AdminProjectDetail = () => {
   const { data: team = [] } = useQuery({
     queryKey: ['project-team', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: assignments, error } = await supabase
         .from('project_assignments')
-        .select('*, profiles(full_name, email)')
+        .select('*')
         .eq('project_id', id!);
       if (error) throw error;
-      return data;
+      if (!assignments || assignments.length === 0) return [];
+
+      const userIds = assignments.map(a => a.user_id);
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', userIds);
+
+      if (profileError) throw profileError;
+
+      return assignments.map(a => ({
+        ...a,
+        profiles: profiles.find(p => p.user_id === a.user_id) || null
+      }));
     },
     enabled: !!id,
   });
