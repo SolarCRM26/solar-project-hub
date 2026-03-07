@@ -24,32 +24,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const fetchUserData = async (userId: string) => {
-    const [rolesRes, profileRes] = await Promise.all([
-      supabase.from('user_roles').select('role').eq('user_id', userId),
-      supabase.from('profiles').select('full_name, email, avatar_url').eq('user_id', userId).single(),
-    ]);
-    if (rolesRes.data) setRoles(rolesRes.data.map(r => r.role as AppRole));
-    if (profileRes.data) setProfile(profileRes.data);
+    try {
+      const [rolesRes, profileRes] = await Promise.all([
+        supabase.from('user_roles').select('role').eq('user_id', userId),
+        supabase.from('profiles').select('full_name, email, avatar_url').eq('user_id', userId).single(),
+      ]);
+      if (rolesRes.data) setRoles(rolesRes.data.map(r => r.role as AppRole));
+      if (profileRes.data) setProfile(profileRes.data);
+    } catch (e) {
+      console.error('Failed to load user data:', e);
+    } finally {
+      // Always clear loading after data fetch, success or failure
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    // onAuthStateChange fires immediately with the current session on mount,
+    // then again on every subsequent change (sign in, sign out, token refresh).
+    // Keep this callback plain (non-async) — Supabase doesn't await it.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        setTimeout(() => fetchUserData(session.user.id), 0);
+        // Show spinner while roles load — prevents "Pending Approval" flash on sign-in
+        setLoading(true);
+        fetchUserData(session.user.id);
       } else {
         setRoles([]);
         setProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
+    // Safety net: if onAuthStateChange doesn't fire for a logged-out user,
+    // getSession ensures loading is never stuck at true.
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) fetchUserData(session.user.id);
-      setLoading(false);
+      if (!session) setLoading(false);
     });
 
     return () => subscription.unsubscribe();

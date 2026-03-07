@@ -9,7 +9,6 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/DashboardLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import RoleSelection from "./pages/RoleSelection";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
@@ -41,9 +40,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route path="/role-selection" element={<RoleSelection />} />
               <Route path="/" element={<Index />} />
-              
+
               <Route element={<ProtectedRoute />}>
                 <Route element={<DashboardLayout />}>
                   {/* Admin routes */}
