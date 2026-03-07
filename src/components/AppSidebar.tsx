@@ -15,8 +15,8 @@ import {
 } from '@/components/ui/sidebar';
 import {
   Sun, LayoutDashboard, FolderKanban, ListTodo, FileText,
-  HardHat, ClipboardCheck, Camera, BookOpen, Eye,
-  LogOut, User, ChevronRight, Users, Building2, UserCircle, MapPin, ListChecks, BarChart3, UserCheck,
+  ClipboardCheck, Camera, BookOpen, Eye,
+  LogOut, User, Users, Building2, UserCircle, MapPin, ListChecks, BarChart3,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -28,7 +28,6 @@ const adminItems = [
   { title: 'Checklists', url: '/admin/checklists', icon: ListChecks },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
   { title: 'Users', url: '/admin/users', icon: Users },
-  { title: 'Role Requests', url: '/admin/role-requests', icon: UserCheck },
   { title: 'Organizations', url: '/admin/organizations', icon: Building2 },
   { title: 'Clients', url: '/admin/clients', icon: UserCircle },
   { title: 'Sites', url: '/admin/sites', icon: MapPin },
@@ -51,14 +50,13 @@ export function AppSidebar() {
   const { hasRole, profile, signOut } = useAuth();
   const location = useLocation();
 
-  const isAdmin = hasRole('admin') || hasRole('project_manager');
+  const isAdmin = hasRole('admin');
   const isEngineer = hasRole('engineer');
   const isCustomer = hasRole('customer');
-  const isQA = hasRole('qa_manager');
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
-      <div className="flex items-center gap-2 px-4 py-4 border-b border-sidebar-border">
+      <div className={`flex items-center gap-2 py-4 border-b border-sidebar-border ${collapsed ? 'justify-center px-2' : 'px-4'}`}>
         <div className="p-1.5 rounded-lg bg-gradient-solar flex-shrink-0">
           <Sun className="h-5 w-5 text-solar-foreground" />
         </div>
@@ -66,16 +64,16 @@ export function AppSidebar() {
       </div>
 
       <SidebarContent>
-        {(isAdmin || isQA) && (
+        {isAdmin && (
           <SidebarGroup>
             {!collapsed && <SidebarGroupLabel className="text-sidebar-foreground/60 uppercase text-xs tracking-wider">Administration</SidebarGroupLabel>}
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminItems.map(item => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end={item.url === '/admin'} className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                        <item.icon className="mr-2 h-4 w-4" />
+                    <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                      <NavLink to={item.url} end={item.url === '/admin'} className={`hover:bg-sidebar-accent flex items-center ${collapsed ? 'justify-center' : ''}`} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <item.icon className={`h-4 w-4 flex-shrink-0 ${!collapsed ? 'mr-2' : ''}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -93,9 +91,9 @@ export function AppSidebar() {
               <SidebarMenu>
                 {engineerItems.map(item => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end={item.url === '/engineer'} className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                        <item.icon className="mr-2 h-4 w-4" />
+                    <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                      <NavLink to={item.url} end={item.url === '/engineer'} className={`hover:bg-sidebar-accent flex items-center ${collapsed ? 'justify-center' : ''}`} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <item.icon className={`h-4 w-4 flex-shrink-0 ${!collapsed ? 'mr-2' : ''}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -113,9 +111,9 @@ export function AppSidebar() {
               <SidebarMenu>
                 {customerItems.map(item => (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink to={item.url} end className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
-                        <item.icon className="mr-2 h-4 w-4" />
+                    <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                      <NavLink to={item.url} end className={`hover:bg-sidebar-accent flex items-center ${collapsed ? 'justify-center' : ''}`} activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                        <item.icon className={`h-4 w-4 flex-shrink-0 ${!collapsed ? 'mr-2' : ''}`} />
                         {!collapsed && <span>{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
@@ -128,7 +126,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${collapsed ? 'justify-center' : ''}`}>
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
             <User className="h-4 w-4 text-sidebar-foreground" />
           </div>
@@ -138,11 +136,9 @@ export function AppSidebar() {
               <p className="text-xs text-sidebar-foreground/60 truncate">{profile?.email}</p>
             </div>
           )}
-          {!collapsed && (
-            <Button variant="ghost" size="icon" onClick={signOut} className="flex-shrink-0 text-sidebar-foreground hover:text-destructive">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          )}
+          <Button variant="ghost" size="icon" onClick={signOut} className={`flex-shrink-0 text-sidebar-foreground hover:text-destructive ${collapsed ? 'hidden' : ''}`}>
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </SidebarFooter>
     </Sidebar>
