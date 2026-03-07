@@ -12,21 +12,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Users, Search, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-type AppRole = 'admin' | 'project_manager' | 'engineer' | 'qa_manager' | 'customer';
+type AppRole = 'admin' | 'engineer' | 'customer';
 
 const roleLabels: Record<AppRole, string> = {
   admin: 'Admin',
-  project_manager: 'Project Manager',
-  engineer: 'Engineer',
-  qa_manager: 'QA Manager',
+  engineer: 'Field Engineer',
   customer: 'Customer',
 };
 
 const roleColors: Record<AppRole, string> = {
   admin: 'bg-red-500/20 text-red-700 dark:text-red-300',
-  project_manager: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
   engineer: 'bg-green-500/20 text-green-700 dark:text-green-300',
-  qa_manager: 'bg-purple-500/20 text-purple-700 dark:text-purple-300',
   customer: 'bg-orange-500/20 text-orange-700 dark:text-orange-300',
 };
 
@@ -54,14 +50,14 @@ const AdminUsers = () => {
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (profilesError) throw profilesError;
 
       // Fetch user roles
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role');
-      
+
       if (rolesError) throw rolesError;
 
       const userRolesMap = roles.reduce((acc: Record<string, string[]>, r: any) => {
@@ -87,7 +83,7 @@ const AdminUsers = () => {
           emailRedirectTo: window.location.origin,
         },
       });
-      
+
       if (authError) throw authError;
       return authData;
     },

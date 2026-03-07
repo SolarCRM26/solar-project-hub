@@ -43,7 +43,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
 
               {/* Admin-only routes */}
-              <Route element={<ProtectedRoute allowedRoles={['admin', 'project_manager', 'qa_manager']} />}>
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
                 <Route element={<DashboardLayout />}>
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/projects" element={<AdminProjects />} />

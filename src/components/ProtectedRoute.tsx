@@ -2,7 +2,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Outlet } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 
-type AppRole = 'admin' | 'project_manager' | 'engineer' | 'qa_manager' | 'customer';
+type AppRole = 'admin' | 'engineer' | 'customer';
 
 interface ProtectedRouteProps {
   allowedRoles?: AppRole[];

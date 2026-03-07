@@ -44,7 +44,7 @@ const Index = () => {
   }
 
   // Route based on role
-  if (roles.includes('admin') || roles.includes('project_manager') || roles.includes('qa_manager')) {
+  if (roles.includes('admin')) {
     return <Navigate to="/admin" replace />;
   }
   if (roles.includes('engineer')) {
