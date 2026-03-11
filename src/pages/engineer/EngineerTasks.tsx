@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { StatusBadge } from '@/components/StatusBadges';
-import { ChecklistRunner } from '@/components/ChecklistRunner';
+import { TaskExecutionTabs } from '@/components/TaskExecutionTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -62,13 +62,13 @@ const EngineerTasks = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Due</TableHead>
-                <TableHead>Checklist</TableHead>
-                <TableHead>Update</TableHead>
+                <TableHead>Actions</TableHead>
+                <TableHead>Update Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {tasks.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">No tasks assigned</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground py-8">No tasks assigned</TableCell></TableRow>
               ) : (
                 tasks.map(task => (
                   <TableRow key={task.id}>
@@ -83,7 +83,12 @@ const EngineerTasks = () => {
                     <TableCell><span className="font-mono text-sm">P{task.priority}</span></TableCell>
                     <TableCell>{task.due_date || '—'}</TableCell>
                     <TableCell>
-                      <ChecklistRunner taskId={task.id} projectId={task.project_id} />
+                      <TaskExecutionTabs 
+                        taskId={task.id} 
+                        projectId={task.project_id} 
+                        taskTitle={task.title}
+                        taskStatus={task.status}
+                      />
                     </TableCell>
                     <TableCell>
                       <Select value={task.status} onValueChange={v => updateTask.mutate({ id: task.id, status: v })}>

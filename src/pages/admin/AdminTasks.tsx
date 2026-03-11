@@ -30,15 +30,39 @@ const AdminTasks = () => {
 
   const [form, setForm] = useState({
     title: '', description: '', project_id: '', status: 'pending' as string,
-    priority: '0', due_date: '',
+    priority: '0', due_date: '', assigned_to: '',
   });
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tasks').select('*, projects(name)').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*, projects(name)')
+        .order('created_at', { ascending: false });
       if (error) throw error;
-      return data;
+      
+      // Fetch assigned user profiles separately
+      const assignedUserIds = [...new Set(data.map(t => t.assigned_to).filter(Boolean))];
+      
+      if (assignedUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, email')
+          .in('user_id', assignedUserIds);
+        
+        const profilesMap = profiles?.reduce((acc: any, p: any) => {
+          acc[p.user_id] = p;
+          return acc;
+        }, {}) || {};
+        
+        return data.map(task => ({
+          ...task,
+          profile: task.assigned_to ? profilesMap[task.assigned_to] : null
+        }));
+      }
+      
+      return data.map(task => ({ ...task, profile: null }));
     },
   });
 
@@ -51,6 +75,34 @@ const AdminTasks = () => {
     },
   });
 
+  // Fetch users with engineer role for assignment
+  const { data: engineers = [] } = useQuery({
+    queryKey: ['engineers'],
+    queryFn: async () => {
+      // Fetch engineer role user IDs
+      const { data: engineerRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'engineer');
+      
+      if (rolesError) throw rolesError;
+      
+      const engineerIds = engineerRoles.map(r => r.user_id);
+      
+      if (engineerIds.length === 0) return [];
+      
+      // Fetch profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, email')
+        .in('user_id', engineerIds)
+        .order('full_name');
+      
+      if (profilesError) throw profilesError;
+      return profiles;
+    },
+  });
+
   const createTask = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('tasks').insert({
@@ -60,6 +112,7 @@ const AdminTasks = () => {
         status: form.status as any,
         priority: parseInt(form.priority),
         due_date: form.due_date || null,
+        assigned_to: form.assigned_to || null,
         created_by: user?.id,
       });
       if (error) throw error;
@@ -67,7 +120,11 @@ const AdminTasks = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setOpen(false);
-      toast({ title: 'Task created' });
+      setForm({
+        title: '', description: '', project_id: '', status: 'pending',
+        priority: '0', due_date: '', assigned_to: '',
+      });
+      toast({ title: 'Task created and assigned' });
     },
     onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
@@ -118,6 +175,20 @@ const AdminTasks = () => {
                   <SelectContent>{projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+                <Label>Assign To (Field Engineer)</Label>
+                <Select value={form.assigned_to} onValueChange={v => setForm(f => ({ ...f, assigned_to: v === 'unassigned' ? '' : v }))}>
+                  <SelectTrigger><SelectValue placeholder="Select engineer (optional)" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Unassigned</SelectItem>
+                    {engineers.map(e => (
+                      <SelectItem key={e.user_id} value={e.user_id}>
+                        {e.full_name} ({e.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Priority (0-5)</Label>
@@ -160,6 +231,7 @@ const AdminTasks = () => {
               <TableRow>
                 <TableHead>Task</TableHead>
                 <TableHead>Project</TableHead>
+                <TableHead>Assigned To</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Priority</TableHead>
                 <TableHead>Due Date</TableHead>
@@ -169,7 +241,7 @@ const AdminTasks = () => {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={7}>
                     <EmptyState 
                       icon={CheckSquare}
                       title="No tasks found"
@@ -189,6 +261,16 @@ const AdminTasks = () => {
                       </div>
                     </TableCell>
                     <TableCell>{(task as any).projects?.name || '—'}</TableCell>
+                    <TableCell>
+                      {(task as any).profile ? (
+                        <div>
+                          <p className="text-sm font-medium">{(task as any).profile.full_name}</p>
+                          <p className="text-xs text-muted-foreground">{(task as any).profile.email}</p>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Unassigned</span>
+                      )}
+                    </TableCell>
                     <TableCell><StatusBadge status={task.status} /></TableCell>
                     <TableCell>
                       <span className={`font-mono text-sm ${task.priority >= 4 ? 'text-destructive' : task.priority >= 2 ? 'text-warning' : 'text-muted-foreground'}`}>
