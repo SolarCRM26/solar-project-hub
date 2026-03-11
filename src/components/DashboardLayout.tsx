@@ -2,8 +2,11 @@ import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/AppSidebar';
 import { NotificationBell } from '@/components/NotificationBell';
 import { Outlet } from 'react-router-dom';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 
 const DashboardLayout = () => {
+  useRealtimeSync();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">

@@ -125,26 +125,25 @@ const AdminProjectDetail = () => {
   const { data: customers = [] } = useQuery({
     queryKey: ['customers-list'],
     queryFn: async () => {
-      // Fetch users who have the 'customer' role
       const { data: userRoles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'customer');
-
+        .from('user_roles').select('user_id').eq('role', 'customer');
       if (roleError) throw roleError;
-
       if (!userRoles || userRoles.length === 0) return [];
 
       const userIds = userRoles.map(ur => ur.user_id);
-
       const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, email')
-        .in('user_id', userIds)
-        .order('full_name');
-
+        .from('profiles').select('user_id, full_name, email').in('user_id', userIds).order('full_name');
       if (profileError) throw profileError;
-      return profiles;
+
+      const { data: existingClients } = await supabase
+        .from('clients').select('id, user_id').in('user_id', userIds);
+
+      return (profiles || []).map(p => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        email: p.email,
+        client_id: existingClients?.find(c => c.user_id === p.user_id)?.id ?? null,
+      }));
     },
   });
 
@@ -159,20 +158,83 @@ const AdminProjectDetail = () => {
 
   const updateProject = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from('projects').update({
-        name: form.name,
-        description: form.description || null,
-        project_type: form.project_type as any,
-        stage: form.stage as any,
-        capacity_kw: form.capacity_kw ? parseFloat(form.capacity_kw) : null,
-        estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : null,
-        start_date: form.start_date || null,
-        target_completion: form.target_completion || null,
-        client_id: form.client_id || null,
-        site_id: form.site_id || null,
-        organization_id: form.organization_id || null,
-      }).eq('id', id!);
-      if (error) throw error;
+      try {
+        let resolvedClientId: string | null = null;
+        if (form.client_id && form.client_id !== 'none') {
+          // Robust client mapping with limit(1) to avoid PGRST116 multiple-rows error
+          const { data: existingClient, error: existError } = await supabase
+            .from('clients')
+            .select('id')
+            .eq('user_id', form.client_id)
+            .limit(1)
+            .maybeSingle();
+
+          if (existError) {
+            console.error('Error fetching client by user_id:', existError);
+            throw new Error(`DB Error on client lookup: ${existError.message}`);
+          }
+
+          if (existingClient?.id) {
+            resolvedClientId = existingClient.id;
+          } else {
+            // It might already be a clients.id if no change was made, so let's check
+            const { data: existingById, error: existingByIdError } = await supabase
+              .from('clients')
+              .select('id')
+              .eq('id', form.client_id)
+              .maybeSingle();
+              
+            if (existingById?.id) {
+              resolvedClientId = existingById.id;
+            } else {
+              // Auto-create missing client record for this customer
+              const selectedCustomer = customers.find(c => c.user_id === form.client_id);
+              const { data: newClient, error: clientError } = await supabase
+                .from('clients')
+                .insert({
+                  name: selectedCustomer?.full_name || selectedCustomer?.email || 'Customer',
+                  email: selectedCustomer?.email || null,
+                  user_id: form.client_id,
+                })
+                .select('id')
+                .single();
+              
+              if (clientError) {
+                console.error('Error inserting new client:', clientError);
+                throw new Error(`DB Error creating client profile: ${clientError.message}`);
+              }
+              resolvedClientId = newClient.id;
+            }
+          }
+        }
+
+        const projectPayload = {
+          name: form.name,
+          description: form.description || null,
+          project_type: form.project_type as any,
+          stage: form.stage as any,
+          capacity_kw: form.capacity_kw ? parseFloat(form.capacity_kw) : null,
+          estimated_cost: form.estimated_cost ? parseFloat(form.estimated_cost) : null,
+          start_date: form.start_date || null,
+          target_completion: form.target_completion || null,
+          client_id: resolvedClientId || null,
+          site_id: form.site_id || null,
+          organization_id: form.organization_id || null,
+        };
+        
+        console.log('Updating project payload:', projectPayload);
+
+        const { error: projectError } = await supabase.from('projects').update(projectPayload).eq('id', id!);
+        
+        if (projectError) {
+          console.error('Error updating project:', projectError);
+          // Append the resolved client_id to the error message so the UI toast shows us EXACTLY what was sent!
+          throw new Error(`Project Update Failed: ${projectError.message}. [Debug payload_client_id: ${resolvedClientId || 'null'}]`);
+        }
+      } catch (err: any) {
+        console.error('Update project top-level catch:', err);
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', id] });
@@ -330,7 +392,7 @@ const AdminProjectDetail = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Client</Label>
+                  <Label>Client (Customer User)</Label>
                   <Select value={form.client_id || "none"} onValueChange={v => setForm(f => ({ ...f, client_id: v === 'none' ? '' : v }))}>
                     <SelectTrigger><SelectValue placeholder="Select client" /></SelectTrigger>
                     <SelectContent>
