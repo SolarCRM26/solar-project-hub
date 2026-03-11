@@ -22,6 +22,7 @@ import AdminSites from "./pages/admin/AdminSites";
 import AdminChecklists from "./pages/admin/AdminChecklists";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminRoleRequests from "./pages/admin/AdminRoleRequests";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import EngineerDashboard from "./pages/engineer/EngineerDashboard";
 import EngineerTasks from "./pages/engineer/EngineerTasks";
 import EngineerLogs from "./pages/engineer/EngineerLogs";
@@ -57,6 +58,7 @@ const App = () => (
                   <Route path="/admin/checklists" element={<AdminChecklists />} />
                   <Route path="/admin/reports" element={<AdminReports />} />
                   <Route path="/admin/role-requests" element={<AdminRoleRequests />} />
+                  <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
                 </Route>
               </Route>
 

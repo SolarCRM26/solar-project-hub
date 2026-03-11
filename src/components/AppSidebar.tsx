@@ -16,7 +16,7 @@ import {
 import {
   Sun, LayoutDashboard, FolderKanban, ListTodo, FileText,
   ClipboardCheck, Camera, BookOpen, Eye,
-  LogOut, User, Users, Building2, UserCircle, MapPin, ListChecks, BarChart3,
+  LogOut, User, Users, Building2, UserCircle, MapPin, ListChecks, BarChart3, ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -27,6 +27,7 @@ const adminItems = [
   { title: 'Documents', url: '/admin/documents', icon: FileText },
   { title: 'Checklists', url: '/admin/checklists', icon: ListChecks },
   { title: 'Reports', url: '/admin/reports', icon: BarChart3 },
+  { title: 'Audit Logs', url: '/admin/audit-logs', icon: ClipboardList },
   { title: 'Users', url: '/admin/users', icon: Users },
   { title: 'Organizations', url: '/admin/organizations', icon: Building2 },
   { title: 'Sites', url: '/admin/sites', icon: MapPin },
