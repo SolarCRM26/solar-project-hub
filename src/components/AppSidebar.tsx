@@ -35,6 +35,7 @@ const adminItems = [
 const engineerItems = [
   { title: 'My Projects', url: '/engineer', icon: FolderKanban },
   { title: 'My Tasks', url: '/engineer/tasks', icon: ClipboardCheck },
+  { title: 'Documents', url: '/engineer/documents', icon: FileText },
   { title: 'Daily Logs', url: '/engineer/logs', icon: BookOpen },
   { title: 'Photos', url: '/engineer/photos', icon: Camera },
 ];

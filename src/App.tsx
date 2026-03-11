@@ -26,6 +26,7 @@ import EngineerDashboard from "./pages/engineer/EngineerDashboard";
 import EngineerTasks from "./pages/engineer/EngineerTasks";
 import EngineerLogs from "./pages/engineer/EngineerLogs";
 import EngineerPhotos from "./pages/engineer/EngineerPhotos";
+import EngineerDocuments from "./pages/engineer/EngineerDocuments";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="/engineer/tasks" element={<EngineerTasks />} />
                   <Route path="/engineer/logs" element={<EngineerLogs />} />
                   <Route path="/engineer/photos" element={<EngineerPhotos />} />
+                  <Route path="/engineer/documents" element={<EngineerDocuments />} />
                 </Route>
               </Route>
 
