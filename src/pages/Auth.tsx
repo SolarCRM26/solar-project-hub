@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Sun, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { refreshUserData } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,13 +52,44 @@ const Auth = () => {
         return;
       }
 
-      if (data.user && data.session) {
-        toast({ 
-          title: 'Account created successfully!', 
-          description: 'Please select your role to continue.'
+      if (data.user) {
+        if (!data.session) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            toast({
+              title: 'Signup complete',
+              description: 'Please sign in to continue.',
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
+        const { error: roleError, status } = await supabase
+          .from('user_roles')
+          .insert({ user_id: data.user.id, role: 'customer' });
+
+        if (roleError && roleError.code !== '23505' && status !== 409) {
+          toast({
+            title: 'Signup incomplete',
+            description: roleError.message,
+            variant: 'destructive',
+          });
+          setLoading(false);
+          return;
+        }
+
+        await refreshUserData();
+
+        toast({
+          title: 'Account created successfully!',
+          description: 'Customer access is ready. Admins assign other roles.'
         });
-        
-        // Redirect to home - will automatically go to role-selection for new users
+
         navigate('/');
       }
     } catch (error) {
@@ -84,7 +117,7 @@ const Auth = () => {
             <CardHeader className="pb-3">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signup">Customer Sign Up</TabsTrigger>
               </TabsList>
             </CardHeader>
 
@@ -119,6 +152,9 @@ const Auth = () => {
                     <Label htmlFor="signup-password">Password</Label>
                     <Input id="signup-password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required minLength={6} />
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    Sign up is for customers only. Admins assign admin and field engineer roles.
+                  </p>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create Account'}
                   </Button>

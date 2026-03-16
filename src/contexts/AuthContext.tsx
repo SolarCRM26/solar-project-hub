@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   hasRole: (role: AppRole) => boolean;
+  refreshUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,8 +77,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasRole = (role: AppRole) => roles.includes(role);
 
+  const refreshUserData = async () => {
+    if (!user) return;
+    setLoading(true);
+    await fetchUserData(user.id);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, roles, profile, loading, signOut, hasRole }}>
+    <AuthContext.Provider value={{ user, session, roles, profile, loading, signOut, hasRole, refreshUserData }}>
       {children}
     </AuthContext.Provider>
   );

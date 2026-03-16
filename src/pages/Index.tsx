@@ -1,12 +1,61 @@
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Loader2, Clock, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
-  const { user, roles, loading, signOut } = useAuth();
+  const { user, roles, loading, signOut, refreshUserData } = useAuth();
+  const [autoAssigning, setAutoAssigning] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    if (!user || roles.length !== 0 || autoAssigning) return;
+
+    let isActive = true;
+    setAutoAssigning(true);
+
+    const ensureCustomerRole = async () => {
+      const { data: existingRole, error: existingError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'customer')
+        .maybeSingle();
+
+      if (existingError) {
+        console.error('Failed to check customer role:', existingError);
+        return;
+      }
+
+      if (existingRole) {
+        await refreshUserData();
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_roles')
+        .insert({ user_id: user.id, role: 'customer' });
+
+      if (error) {
+        console.error('Failed to auto-assign customer role:', error);
+        return;
+      }
+
+      await refreshUserData();
+    };
+
+    ensureCustomerRole()
+      .finally(() => {
+        if (isActive) setAutoAssigning(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [user, roles, autoAssigning, refreshUserData]);
+
+  if (loading || autoAssigning) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -16,7 +65,7 @@ const Index = () => {
 
   if (!user) return <Navigate to="/auth" replace />;
 
-  // If user has no roles yet, show a pending approval screen
+  // If user has no roles yet, show a role assignment notice
   if (roles.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -25,10 +74,10 @@ const Index = () => {
             <Clock className="h-10 w-10 text-primary" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold">Account Pending Approval</h1>
+            <h1 className="text-2xl font-bold">Role Assignment Required</h1>
             <p className="text-muted-foreground">
-              Your account has been created successfully. An administrator will
-              review and assign your role shortly. Please check back later.
+              Your account is active, but role assignment failed. Please contact
+              an administrator.
             </p>
           </div>
           <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
@@ -62,10 +111,10 @@ const Index = () => {
           <Clock className="h-10 w-10 text-primary" />
         </div>
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">Account Pending Approval</h1>
+          <h1 className="text-2xl font-bold">Role Assignment Required</h1>
           <p className="text-muted-foreground">
-            Your account has been created successfully. An administrator will
-            review and assign your role shortly. Please check back later.
+            Your account is active, but no valid role is assigned. If you are a
+            customer, sign out and sign in again; otherwise contact an admin.
           </p>
         </div>
         <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
