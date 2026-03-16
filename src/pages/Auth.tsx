@@ -90,7 +90,7 @@ const Auth = () => {
           description: 'Customer access is ready. Admins assign other roles.'
         });
 
-        navigate('/');
+        navigate('/customer');
       }
     } catch (error) {
       toast({ title: 'Signup failed', description: 'An error occurred during signup.', variant: 'destructive' });

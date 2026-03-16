@@ -24,14 +24,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<AuthContextType['profile']>(null);
   const [loading, setLoading] = useState(true);
 
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T | null> => {
+    const timeoutPromise = new Promise<null>((resolve) => {
+      setTimeout(() => {
+        console.error(`${label} timed out after ${timeoutMs}ms`);
+        resolve(null);
+      }, timeoutMs);
+    });
+
+    return Promise.race([promise, timeoutPromise]);
+  };
+
   const fetchUserData = async (userId: string) => {
     try {
-      const [rolesRes, profileRes] = await Promise.all([
+      const rolesRes = await withTimeout(
         supabase.from('user_roles').select('role').eq('user_id', userId),
-        supabase.from('profiles').select('full_name, email, avatar_url').eq('user_id', userId).single(),
-      ]);
-      if (rolesRes.data) setRoles(rolesRes.data.map(r => r.role as AppRole));
-      if (profileRes.data) setProfile(profileRes.data);
+        8000,
+        'Roles fetch',
+      );
+
+      if (rolesRes && 'error' in rolesRes && rolesRes.error) {
+        console.error('Failed to load roles:', rolesRes.error);
+      } else if (rolesRes && 'data' in rolesRes && rolesRes.data) {
+        setRoles(rolesRes.data.map(r => r.role as AppRole));
+      }
+
+      const profileRes = await withTimeout(
+        supabase
+          .from('profiles')
+          .select('full_name, email, avatar_url')
+          .eq('user_id', userId)
+          .maybeSingle(),
+        8000,
+        'Profile fetch',
+      );
+
+      if (profileRes && 'error' in profileRes && profileRes.error) {
+        console.error('Failed to load profile:', profileRes.error);
+      } else if (profileRes && 'data' in profileRes) {
+        setProfile(profileRes.data ?? null);
+      }
     } catch (e) {
       console.error('Failed to load user data:', e);
     } finally {
@@ -79,7 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserData = async () => {
     if (!user) return;
-    setLoading(true);
     await fetchUserData(user.id);
   };
 

@@ -1,61 +1,12 @@
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { Loader2, Clock, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
-  const { user, roles, loading, signOut, refreshUserData } = useAuth();
-  const [autoAssigning, setAutoAssigning] = useState(false);
+  const { user, roles, loading, signOut } = useAuth();
 
-  useEffect(() => {
-    if (!user || roles.length !== 0 || autoAssigning) return;
-
-    let isActive = true;
-    setAutoAssigning(true);
-
-    const ensureCustomerRole = async () => {
-      const { data: existingRole, error: existingError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'customer')
-        .maybeSingle();
-
-      if (existingError) {
-        console.error('Failed to check customer role:', existingError);
-        return;
-      }
-
-      if (existingRole) {
-        await refreshUserData();
-        return;
-      }
-
-      const { error } = await supabase
-        .from('user_roles')
-        .insert({ user_id: user.id, role: 'customer' });
-
-      if (error) {
-        console.error('Failed to auto-assign customer role:', error);
-        return;
-      }
-
-      await refreshUserData();
-    };
-
-    ensureCustomerRole()
-      .finally(() => {
-        if (isActive) setAutoAssigning(false);
-      });
-
-    return () => {
-      isActive = false;
-    };
-  }, [user, roles, autoAssigning, refreshUserData]);
-
-  if (loading || autoAssigning) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
