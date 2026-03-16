@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import {
   Sun, LayoutDashboard, FolderKanban, ListTodo, FileText,
-  ClipboardCheck, Camera, BookOpen, Eye,
+  ClipboardCheck, Camera, BookOpen, Eye, Package,
   LogOut, User, Users, Building2, UserCircle, MapPin, ListChecks, BarChart3, ClipboardList,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ const engineerItems = [
 const customerItems = [
   { title: 'My Projects', url: '/customer', icon: Eye },
   { title: 'Document Access', url: '/customer/documents', icon: FileText },
+  { title: 'Closeout Access', url: '/customer/closeout', icon: Package },
 ];
 
 export function AppSidebar() {

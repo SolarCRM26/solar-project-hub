@@ -30,6 +30,7 @@ import EngineerPhotos from "./pages/engineer/EngineerPhotos";
 import EngineerDocuments from "./pages/engineer/EngineerDocuments";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import CustomerDocuments from "./pages/customer/CustomerDocuments";
+import CustomerCloseout from "./pages/customer/CustomerCloseout";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
                 <Route element={<DashboardLayout />}>
                   <Route path="/customer" element={<CustomerDashboard />} />
                   <Route path="/customer/documents" element={<CustomerDocuments />} />
+                  <Route path="/customer/closeout" element={<CustomerCloseout />} />
                 </Route>
               </Route>
 
