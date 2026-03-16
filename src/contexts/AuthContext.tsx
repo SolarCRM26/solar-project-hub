@@ -37,19 +37,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserData = async (userId: string) => {
     try {
-      const rolesRes = await withTimeout(
-        supabase.from('user_roles').select('role').eq('user_id', userId),
-        8000,
-        'Roles fetch',
-      );
+      const loadRoles = async () => {
+        const rolesRes = await withTimeout(
+          supabase.from('user_roles').select('role').eq('user_id', userId),
+          8000,
+          'Roles fetch',
+        );
 
-      if (rolesRes && 'error' in rolesRes && rolesRes.error) {
-        console.error('Failed to load roles:', rolesRes.error);
-      } else if (rolesRes && 'data' in rolesRes && rolesRes.data) {
-        setRoles(rolesRes.data.map(r => r.role as AppRole));
+        if (rolesRes && 'error' in rolesRes && rolesRes.error) {
+          console.error('Failed to load roles:', rolesRes.error);
+          return [] as AppRole[];
+        }
+
+        if (rolesRes && 'data' in rolesRes && rolesRes.data) {
+          return rolesRes.data.map(r => r.role as AppRole);
+        }
+
+        return [] as AppRole[];
+      };
+
+      let nextRoles = await loadRoles();
+
+      if (nextRoles.length === 0) {
+        const { error: assignError, status } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'customer' });
+
+        if (assignError && assignError.code !== '23505' && status !== 409) {
+          console.error('Failed to auto-assign customer role:', assignError);
+        } else {
+          nextRoles = await loadRoles();
+        }
       }
 
-      const profileRes = await withTimeout(
+      setRoles(nextRoles);
+
+      const resolvedProfile = await withTimeout(
         supabase
           .from('profiles')
           .select('full_name, email, avatar_url')
@@ -59,10 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'Profile fetch',
       );
 
-      if (profileRes && 'error' in profileRes && profileRes.error) {
-        console.error('Failed to load profile:', profileRes.error);
-      } else if (profileRes && 'data' in profileRes) {
-        setProfile(profileRes.data ?? null);
+      if (resolvedProfile && 'error' in resolvedProfile && resolvedProfile.error) {
+        console.error('Failed to load profile:', resolvedProfile.error);
+      } else if (resolvedProfile && 'data' in resolvedProfile) {
+        setProfile(resolvedProfile.data ?? null);
       }
     } catch (e) {
       console.error('Failed to load user data:', e);
