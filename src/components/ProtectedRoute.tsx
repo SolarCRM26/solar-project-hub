@@ -11,6 +11,14 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { user, roles, loading } = useAuth();
 
+  const effectiveRole: AppRole | null = roles.includes('admin')
+    ? 'admin'
+    : roles.includes('engineer')
+      ? 'engineer'
+      : roles.includes('customer')
+        ? 'customer'
+        : null;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -23,7 +31,7 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   if (!user) return <Navigate to="/auth" replace />;
 
   // Wrong role for this section → back to index, which routes to their dashboard
-  if (allowedRoles && !allowedRoles.some(r => roles.includes(r))) {
+  if (allowedRoles && (!effectiveRole || !allowedRoles.includes(effectiveRole))) {
     return <Navigate to="/" replace />;
   }
 

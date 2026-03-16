@@ -48,12 +48,20 @@ const customerItems = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
-  const { hasRole, profile, signOut } = useAuth();
+  const { roles, profile, signOut } = useAuth();
   const location = useLocation();
 
-  const isAdmin = hasRole('admin');
-  const isEngineer = hasRole('engineer');
-  const isCustomer = hasRole('customer');
+  const effectiveRole = roles.includes('admin')
+    ? 'admin'
+    : roles.includes('engineer')
+      ? 'engineer'
+      : roles.includes('customer')
+        ? 'customer'
+        : null;
+
+  const isAdmin = effectiveRole === 'admin';
+  const isEngineer = effectiveRole === 'engineer';
+  const isCustomer = effectiveRole === 'customer';
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
