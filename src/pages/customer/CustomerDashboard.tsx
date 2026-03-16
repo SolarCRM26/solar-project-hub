@@ -74,12 +74,34 @@ const CustomerDashboard = () => {
         supabase.from('milestones').select('*').eq('project_id', project.id),
       ]);
 
+      const [photosRes, taskPhotosRes] = await Promise.all([
+        supabase.from('photos').select('caption, created_at, file_path').eq('project_id', project.id),
+        supabase.from('task_photos').select('caption, uploaded_at, file_path').eq('project_id', project.id),
+      ]);
+
+      if (photosRes.error) throw photosRes.error;
+      if (taskPhotosRes.error) throw taskPhotosRes.error;
+
+      const photoEvidence = [
+        ...(photosRes.data || []).map(photo => ({
+          caption: photo.caption,
+          created_at: photo.created_at,
+          file_path: photo.file_path,
+        })),
+        ...(taskPhotosRes.data || []).map(photo => ({
+          caption: photo.caption,
+          created_at: photo.uploaded_at,
+          file_path: photo.file_path,
+        })),
+      ];
+
       const pdfBlob = await generateCloseoutPackagePDF({
         project,
         client: clientRes.data || undefined,
         site: siteRes.data || undefined,
         documents: docsRes.data || [],
         milestones: milestonesRes.data || [],
+        photoEvidence,
       });
 
       // Download the PDF

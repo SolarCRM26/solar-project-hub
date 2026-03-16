@@ -30,6 +30,8 @@ interface DocumentData {
   name: string;
   state: string;
   current_version: number;
+  document_type?: string;
+  category?: string;
 }
 
 interface MilestoneData {
@@ -39,17 +41,31 @@ interface MilestoneData {
   completed_at?: string;
 }
 
+interface PhotoEvidenceData {
+  caption?: string | null;
+  created_at?: string;
+  file_path?: string;
+}
+
 interface CloseoutPackageData {
   project: ProjectData;
   client?: ClientData;
   site?: SiteData;
   documents?: DocumentData[];
   milestones?: MilestoneData[];
+  photoEvidence?: PhotoEvidenceData[];
 }
 
 export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Promise<Blob> => {
   const doc = new jsPDF();
   let yPos = 20;
+
+  const ensurePageSpace = (requiredHeight: number) => {
+    if (yPos + requiredHeight > 270) {
+      doc.addPage();
+      yPos = 20;
+    }
+  };
 
   // Header
   doc.setFontSize(24);
@@ -63,10 +79,10 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
 
   yPos += 15;
 
-  // Project Information
+  // Project Summary
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text('Project Information', 20, yPos);
+  doc.text('Project Summary', 20, yPos);
   yPos += 5;
 
   doc.setLineWidth(0.5);
@@ -173,15 +189,12 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     yPos += 10;
   }
 
-  // Project Milestones
+  // Milestone Timeline
   if (data.milestones && data.milestones.length > 0) {
-    if (yPos > 220) {
-      doc.addPage();
-      yPos = 20;
-    }
+    ensurePageSpace(70);
 
     doc.setFontSize(16);
-    doc.text('Project Milestones', 20, yPos);
+    doc.text('Milestone Timeline', 20, yPos);
     yPos += 10;
 
     const milestoneRows = data.milestones.map(m => [
@@ -201,35 +214,116 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     yPos = (doc as any).lastAutoTable.finalY + 15;
   }
 
-  // Documents Delivered
-  if (data.documents && data.documents.length > 0) {
-    if (yPos > 220) {
-      doc.addPage();
-      yPos = 20;
-    }
+  const allDocuments = data.documents || [];
 
-    doc.setFontSize(16);
-    doc.text('Documents Delivered', 20, yPos);
-    yPos += 10;
+  const approvedDrawings = allDocuments.filter(
+    d =>
+      d.document_type === 'drawing' &&
+      (d.state === 'afc' || d.state === 'as_built'),
+  );
 
-    const docRows = data.documents
-      .filter(d => d.state === 'as_built' || d.state === 'afc')
-      .map(d => [
+  const qaReports = allDocuments.filter(
+    d =>
+      d.document_type === 'report' &&
+      (d.state === 'afc' || d.state === 'as_built'),
+  );
+
+  const equipmentKeywords = ['module', 'panel', 'inverter', 'battery', 'transformer', 'racking', 'combiner'];
+  const equipmentDocuments = allDocuments.filter(d => {
+    const combined = `${d.name} ${d.category || ''} ${d.document_type || ''}`.toLowerCase();
+    return equipmentKeywords.some(keyword => combined.includes(keyword));
+  });
+
+  const approvedDrawingRows = approvedDrawings.length > 0
+    ? approvedDrawings.map(d => [
         d.name,
         d.state.toUpperCase().replace('_', ' '),
         `v${d.current_version}`,
-      ]);
+      ])
+    : [['No approved drawings available', '-', '-']];
 
-    autoTable(doc, {
-      startY: yPos,
-      head: [['Document Name', 'Status', 'Version']],
-      body: docRows,
-      theme: 'grid',
-      headStyles: { fillColor: [66, 139, 202] },
-    });
+  ensurePageSpace(80);
+  doc.setFontSize(16);
+  doc.text('Approved Drawings', 20, yPos);
+  yPos += 10;
 
-    yPos = (doc as any).lastAutoTable.finalY + 15;
-  }
+  autoTable(doc, {
+    startY: yPos,
+    head: [['Drawing', 'Status', 'Version']],
+    body: approvedDrawingRows,
+    theme: 'grid',
+    headStyles: { fillColor: [66, 139, 202] },
+  });
+
+  yPos = (doc as any).lastAutoTable.finalY + 15;
+
+  const photoRows = (data.photoEvidence || []).length > 0
+    ? (data.photoEvidence || []).slice(0, 20).map((photo, index) => [
+        `Photo ${index + 1}`,
+        photo.caption || 'Site evidence',
+        photo.created_at ? new Date(photo.created_at).toLocaleDateString() : 'N/A',
+      ])
+    : [['No photo evidence available', '-', '-']];
+
+  ensurePageSpace(80);
+  doc.setFontSize(16);
+  doc.text('Photo Evidence', 20, yPos);
+  yPos += 10;
+
+  autoTable(doc, {
+    startY: yPos,
+    head: [['Item', 'Caption', 'Date']],
+    body: photoRows,
+    theme: 'grid',
+    headStyles: { fillColor: [66, 139, 202] },
+  });
+
+  yPos = (doc as any).lastAutoTable.finalY + 15;
+
+  const qaReportRows = qaReports.length > 0
+    ? qaReports.map(d => [
+        d.name,
+        d.state.toUpperCase().replace('_', ' '),
+        `v${d.current_version}`,
+      ])
+    : [['No QA reports available', '-', '-']];
+
+  ensurePageSpace(80);
+  doc.setFontSize(16);
+  doc.text('QA Reports', 20, yPos);
+  yPos += 10;
+
+  autoTable(doc, {
+    startY: yPos,
+    head: [['Report', 'Status', 'Version']],
+    body: qaReportRows,
+    theme: 'grid',
+    headStyles: { fillColor: [66, 139, 202] },
+  });
+
+  yPos = (doc as any).lastAutoTable.finalY + 15;
+
+  const equipmentRows = [
+    ['System Type', data.project.project_type.replace('_', ' ').toUpperCase()],
+    ['Installed Capacity', data.project.capacity_kw ? `${data.project.capacity_kw} kW DC` : 'N/A'],
+    ['Equipment-Related Documents', `${equipmentDocuments.length}`],
+    ['Estimated Annual Production', data.project.capacity_kw ? `${(data.project.capacity_kw * 1200).toFixed(0)} kWh/year` : 'N/A'],
+  ];
+
+  ensurePageSpace(80);
+  doc.setFontSize(16);
+  doc.text('Equipment Summary', 20, yPos);
+  yPos += 10;
+
+  autoTable(doc, {
+    startY: yPos,
+    head: [['Metric', 'Value']],
+    body: equipmentRows,
+    theme: 'grid',
+    headStyles: { fillColor: [66, 139, 202] },
+  });
+
+  yPos = (doc as any).lastAutoTable.finalY + 15;
 
   // System Specifications (new page)
   doc.addPage();
@@ -261,32 +355,35 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     yPos += 10;
   });
 
-  // Certification
-  yPos += 20;
+  // Client Sign-Off
+  ensurePageSpace(80);
+  yPos += 10;
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.text('CERTIFICATION', 105, yPos, { align: 'center' });
+  doc.text('Client Sign-Off', 105, yPos, { align: 'center' });
   yPos += 15;
 
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  const certText = [
-    'This document certifies that the solar installation project has been completed',
-    'in accordance with the contract specifications and all applicable regulations.',
+  const signOffText = [
+    'I confirm the project closeout package has been reviewed and accepted.',
+    'All required closeout deliverables listed in this package are received.',
     '',
-    'The system has passed all required inspections and is ready for operation.',
+    'Client acceptance and sign-off:',
   ];
 
-  certText.forEach(line => {
+  signOffText.forEach(line => {
     doc.text(line, 105, yPos, { align: 'center' });
     yPos += 7;
   });
 
-  yPos += 20;
-  doc.line(50, yPos, 160, yPos);
-  yPos += 7;
+  yPos += 10;
+  doc.line(30, yPos, 95, yPos);
+  doc.line(115, yPos, 180, yPos);
+  yPos += 6;
   doc.setFontSize(8);
-  doc.text('Authorized Signature                    Date', 105, yPos, { align: 'center' });
+  doc.text('Client Signature', 62, yPos, { align: 'center' });
+  doc.text('Date', 147, yPos, { align: 'center' });
 
   // Footer on all pages
   const pageCount = doc.getNumberOfPages();
