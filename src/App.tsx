@@ -29,6 +29,7 @@ import EngineerLogs from "./pages/engineer/EngineerLogs";
 import EngineerPhotos from "./pages/engineer/EngineerPhotos";
 import EngineerDocuments from "./pages/engineer/EngineerDocuments";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
+import CustomerDocuments from "./pages/customer/CustomerDocuments";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +78,7 @@ const App = () => (
               <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
                 <Route element={<DashboardLayout />}>
                   <Route path="/customer" element={<CustomerDashboard />} />
+                  <Route path="/customer/documents" element={<CustomerDocuments />} />
                 </Route>
               </Route>
 

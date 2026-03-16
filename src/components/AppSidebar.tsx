@@ -43,6 +43,7 @@ const engineerItems = [
 
 const customerItems = [
   { title: 'My Projects', url: '/customer', icon: Eye },
+  { title: 'Document Access', url: '/customer/documents', icon: FileText },
 ];
 
 export function AppSidebar() {
