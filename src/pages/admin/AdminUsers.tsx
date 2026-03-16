@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Plus, Users, Search, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,7 +40,7 @@ const AdminUsers = () => {
     full_name: '',
   });
 
-  const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
+  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
 
   const { data: users = [] } = useQuery({
     queryKey: ['users'],
@@ -104,10 +104,11 @@ const AdminUsers = () => {
       await supabase.from('user_roles').delete().eq('user_id', selectedUser.user_id);
 
       // Insert new roles
-      if (selectedRoles.length > 0) {
-        const { error } = await supabase.from('user_roles').insert(
-          selectedRoles.map(role => ({ user_id: selectedUser.user_id, role }))
-        );
+      if (selectedRole) {
+        const { error } = await supabase.from('user_roles').insert({
+          user_id: selectedUser.user_id,
+          role: selectedRole,
+        });
         if (error) throw error;
       }
     },
@@ -115,7 +116,7 @@ const AdminUsers = () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setRoleDialogOpen(false);
       setSelectedUser(null);
-      setSelectedRoles([]);
+      setSelectedRole(null);
       toast({ title: 'Roles updated' });
     },
     onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
@@ -123,14 +124,8 @@ const AdminUsers = () => {
 
   const openRoleDialog = (user: any) => {
     setSelectedUser(user);
-    setSelectedRoles(user.roles || []);
+    setSelectedRole(user.roles?.[0] || null);
     setRoleDialogOpen(true);
-  };
-
-  const toggleRole = (role: AppRole) => {
-    setSelectedRoles(prev =>
-      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-    );
   };
 
   const filtered = users.filter(u =>
@@ -209,11 +204,13 @@ const AdminUsers = () => {
                         {user.roles.length === 0 ? (
                           <span className="text-xs text-muted-foreground">No roles assigned</span>
                         ) : (
-                          user.roles.map((role: AppRole) => (
-                            <Badge key={role} variant="secondary" className={roleColors[role]}>
-                              {roleLabels[role]}
-                            </Badge>
-                          ))
+                          <Badge
+                            key={user.roles[0]}
+                            variant="secondary"
+                            className={roleColors[user.roles[0] as AppRole]}
+                          >
+                            {roleLabels[user.roles[0] as AppRole]}
+                          </Badge>
                         )}
                       </div>
                     </TableCell>
@@ -237,21 +234,23 @@ const AdminUsers = () => {
             <DialogTitle>Manage Roles: {selectedUser?.full_name || selectedUser?.email}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Select roles for this user:</p>
-            {Object.entries(roleLabels).map(([role, label]) => (
-              <div key={role} className="flex items-center space-x-2">
-                <Checkbox
-                  id={role}
-                  checked={selectedRoles.includes(role as AppRole)}
-                  onCheckedChange={() => toggleRole(role as AppRole)}
-                />
-                <Label htmlFor={role} className="cursor-pointer flex items-center gap-2">
-                  <Badge variant="secondary" className={roleColors[role as AppRole]}>
-                    {label}
-                  </Badge>
-                </Label>
-              </div>
-            ))}
+            <p className="text-sm text-muted-foreground">Select a role for this user:</p>
+            <RadioGroup
+              value={selectedRole || ''}
+              onValueChange={value => setSelectedRole(value as AppRole)}
+              className="space-y-2"
+            >
+              {Object.entries(roleLabels).map(([role, label]) => (
+                <div key={role} className="flex items-center space-x-2">
+                  <RadioGroupItem id={role} value={role} />
+                  <Label htmlFor={role} className="cursor-pointer flex items-center gap-2">
+                    <Badge variant="secondary" className={roleColors[role as AppRole]}>
+                      {label}
+                    </Badge>
+                  </Label>
+                </div>
+              ))}
+            </RadioGroup>
             <Button onClick={() => updateUserRoles.mutate()} className="w-full" disabled={updateUserRoles.isPending}>
               {updateUserRoles.isPending ? 'Saving...' : 'Save Roles'}
             </Button>
