@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Users, Search, Shield } from 'lucide-react';
+import { Plus, Users, Search, Shield, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 type AppRole = 'admin' | 'engineer' | 'customer';
@@ -122,6 +122,21 @@ const AdminUsers = () => {
     onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
+  const deleteUser = useMutation({
+    mutationFn: async (user: any) => {
+      if (!user?.user_id) return;
+
+      await supabase.from('user_roles').delete().eq('user_id', user.user_id);
+      const { error } = await supabase.from('profiles').delete().eq('user_id', user.user_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({ title: 'User deleted' });
+    },
+    onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
   const openRoleDialog = (user: any) => {
     setSelectedUser(user);
     setSelectedRole(user.roles?.[0] || null);
@@ -216,9 +231,25 @@ const AdminUsers = () => {
                     </TableCell>
                     <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <Button variant="outline" size="sm" onClick={() => openRoleDialog(user)}>
-                        <Shield className="h-3 w-3 mr-1" /> Manage Roles
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openRoleDialog(user)}>
+                          <Shield className="h-3 w-3 mr-1" /> Manage Roles
+                        </Button>
+                        {user.roles?.[0] !== 'admin' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              const confirmed = window.confirm('Delete this user? This cannot be undone.');
+                              if (confirmed) deleteUser.mutate(user);
+                            }}
+                            disabled={deleteUser.isPending}
+                            title="Delete user"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
