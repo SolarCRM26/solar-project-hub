@@ -27,8 +27,11 @@ export const ChecklistItem = ({ item, onToggle, onNotesChange, disabled }: Check
   return (
     <div 
       className={cn(
-        "border rounded-lg p-4 transition-all",
-        item.checked ? "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800" : "bg-background"
+        "group rounded-xl border bg-background p-4 transition-all",
+        "hover:border-slate-300/70 hover:bg-slate-50/60 dark:hover:bg-slate-900/30",
+        item.checked
+          ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-800 dark:bg-emerald-950/25"
+          : "border-slate-200/80"
       )}
     >
       <div className="flex items-start gap-3">
@@ -37,23 +40,28 @@ export const ChecklistItem = ({ item, onToggle, onNotesChange, disabled }: Check
           checked={item.checked || false}
           onCheckedChange={(checked) => onToggle(item.id, checked as boolean)}
           disabled={disabled}
-          className="mt-1"
+          className="mt-0.5"
         />
-        <div className="flex-1">
-          <Label
-            htmlFor={item.id}
-            className={cn(
-              "text-sm font-medium cursor-pointer",
-              item.checked && "line-through text-muted-foreground"
-            )}
-          >
-            {item.text}
+        <div className="flex-1 space-y-1">
+          <div className="flex items-center gap-2">
+            <Label
+              htmlFor={item.id}
+              className={cn(
+                "text-sm font-medium cursor-pointer",
+                item.checked && "line-through text-muted-foreground"
+              )}
+            >
+              {item.text}
+            </Label>
             {item.required && (
-              <Badge variant="outline" className="ml-2 text-xs">
+              <Badge
+                variant="outline"
+                className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400"
+              >
                 Required
               </Badge>
             )}
-          </Label>
+          </div>
           
           {(showNotes || item.notes) && (
             <div className="mt-2">
@@ -62,7 +70,7 @@ export const ChecklistItem = ({ item, onToggle, onNotesChange, disabled }: Check
                 value={item.notes || ''}
                 onChange={(e) => onNotesChange(item.id, e.target.value)}
                 disabled={disabled}
-                className="min-h-[60px] text-sm"
+                className="min-h-[72px] text-sm"
               />
             </div>
           )}
@@ -70,7 +78,7 @@ export const ChecklistItem = ({ item, onToggle, onNotesChange, disabled }: Check
           {!showNotes && !item.notes && (
             <button
               onClick={() => setShowNotes(true)}
-              className="text-xs text-muted-foreground hover:text-foreground mt-1"
+              className="text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               disabled={disabled}
             >
               Add notes...
@@ -78,13 +86,22 @@ export const ChecklistItem = ({ item, onToggle, onNotesChange, disabled }: Check
           )}
         </div>
         
-        {item.checked ? (
-          <Check className="h-5 w-5 text-green-600 dark:text-green-400 flex-shrink-0" />
-        ) : item.required ? (
-          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-        ) : (
-          <X className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-        )}
+        <div
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-full border",
+            item.checked && "border-emerald-200 bg-emerald-50",
+            !item.checked && item.required && "border-amber-200 bg-amber-50",
+            !item.checked && !item.required && "border-slate-200 bg-slate-50"
+          )}
+        >
+          {item.checked ? (
+            <Check className="h-4 w-4 text-emerald-600" />
+          ) : item.required ? (
+            <AlertCircle className="h-4 w-4 text-amber-600" />
+          ) : (
+            <X className="h-4 w-4 text-slate-500" />
+          )}
+        </div>
       </div>
     </div>
   );
