@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { generateCloseoutPackagePDF } from '@/utils/pdfGenerator';
 import { useToast } from '@/hooks/use-toast';
+import { ProjectLifecycleStepper } from '@/components/ProjectLifecycleStepper';
 
 const stageOrder = [
   'lead_created', 'proposal_approved', 'contract_signed', 'design_started',
@@ -173,6 +174,8 @@ const CustomerDashboard = () => {
                   </div>
                   <Progress value={progress} className="h-2" />
                 </div>
+
+                <ProjectLifecycleStepper currentStage={project.stage} />
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>

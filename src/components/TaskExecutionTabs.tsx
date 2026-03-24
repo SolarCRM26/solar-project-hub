@@ -20,6 +20,7 @@ import {
   AlertCircle 
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { StatusBadge } from '@/components/StatusBadges';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -139,38 +140,22 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
   const hasCompletedChecklist = checklistRuns.some((run) => (run as { status: string }).status === 'completed');
   const canComplete = taskStatus !== 'completed' && (hasCompletedChecklist || checklistRuns.length === 0);
 
-  const getStatusColor = () => {
-    switch (taskStatus) {
-      case 'completed':
-        return 'bg-green-600';
-      case 'in_progress':
-        return 'bg-blue-600';
-      case 'pending':
-        return 'bg-amber-600';
-      default:
-        return 'bg-gray-600';
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className="transition-colors duration-200 hover:bg-primary/5">
           <ClipboardCheck className="h-4 w-4 mr-2" />
           Execute Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col rounded-lg">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <DialogTitle className="text-xl mb-1">{taskTitle}</DialogTitle>
               <DialogDescription>Complete the checklist, upload photos, and add comments</DialogDescription>
             </div>
-            <Badge className={getStatusColor()}>
-              {taskStatus === 'completed' && <CheckCircle className="h-3 w-3 mr-1" />}
-              {taskStatus.replace('_', ' ').toUpperCase()}
-            </Badge>
+            <StatusBadge status={taskStatus} />
           </div>
         </DialogHeader>
 
@@ -207,22 +192,22 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
               <TabsContent value="checklist" className="mt-0 h-full">
                 <div className="space-y-4">
                   {taskStatus === 'pending' && (
-                    <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+                    <Card className="bg-warning/10 border-warning/30 shadow-sm">
                       <CardContent className="pt-4">
                         <div className="flex items-start gap-3">
-                          <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                          <AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
                           <div className="flex-1">
-                            <p className="font-medium text-amber-900 dark:text-amber-100 mb-2">
+                            <p className="font-medium text-foreground mb-2">
                               Task Not Started
                             </p>
-                            <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                            <p className="text-sm text-muted-foreground mb-3">
                               Start this task to begin working on the checklist and uploading photos.
                             </p>
                             <Button
                               onClick={() => startTask.mutate()}
                               disabled={startTask.isPending}
                               size="sm"
-                              className="bg-amber-600 hover:bg-amber-700"
+                              className="transition-colors duration-200"
                             >
                               {startTask.isPending ? (
                                 <>
@@ -243,9 +228,9 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
                   )}
                   
                   {taskStatus === 'completed' && (
-                    <Card className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800">
+                    <Card className="bg-success/10 border-success/30 shadow-sm">
                       <CardContent className="pt-4">
-                        <div className="flex items-center gap-3 text-green-900 dark:text-green-100">
+                        <div className="flex items-center gap-3 text-foreground">
                           <CheckCircle className="h-5 w-5" />
                           <p className="font-medium">Task Completed</p>
                         </div>
@@ -259,7 +244,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
 
               <TabsContent value="photos" className="mt-0">
                 {taskStatus === 'pending' ? (
-                  <Card className="bg-muted/50">
+                  <Card className="bg-muted/40 shadow-sm">
                     <CardContent className="py-8 text-center">
                       <Camera className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
                       <p className="text-muted-foreground">
@@ -284,7 +269,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
           <div className="border-t pt-4 mt-4 flex items-center justify-between">
             <div className="text-sm text-muted-foreground">
               {!hasCompletedChecklist && checklistRuns.length > 0 && (
-                <span className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                <span className="flex items-center gap-2 text-warning">
                   <AlertCircle className="h-4 w-4" />
                   Complete the checklist to finish the task
                 </span>
@@ -312,7 +297,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
                 <Button
                   onClick={() => setShowCompleteDialog(true)}
                   disabled={!canComplete}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-success hover:bg-success/90 text-success-foreground"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Complete Task
@@ -337,7 +322,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
             <AlertDialogAction
               onClick={() => completeTask.mutate()}
               disabled={completeTask.isPending}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-success hover:bg-success/90 text-success-foreground"
             >
               {completeTask.isPending ? (
                 <>
