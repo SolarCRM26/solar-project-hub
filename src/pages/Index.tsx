@@ -1,7 +1,8 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
-import { Loader2, Clock, LogOut } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import { Loader2, Clock, LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { resolveRoleHomeRoute } from "@/lib/auth-routing";
 
 const Index = () => {
   const { user, roles, loading, signOut } = useAuth();
@@ -14,22 +15,11 @@ const Index = () => {
     );
   }
 
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user) return <Navigate to="/login" replace />;
 
-  // Signup is customer-only, so users without roles should continue to customer area.
-  if (roles.length === 0) {
-    return <Navigate to="/customer" replace />;
-  }
-
-  // Route based on role
-  if (roles.includes('admin')) {
-    return <Navigate to="/admin" replace />;
-  }
-  if (roles.includes('engineer')) {
-    return <Navigate to="/engineer" replace />;
-  }
-  if (roles.includes('customer')) {
-    return <Navigate to="/customer" replace />;
+  const homeRoute = resolveRoleHomeRoute(roles);
+  if (homeRoute !== "/") {
+    return <Navigate to={homeRoute} replace />;
   }
 
   // Fallback — authenticated but unrecognised role combination
@@ -43,11 +33,12 @@ const Index = () => {
           <h1 className="text-2xl font-bold">Role Assignment Required</h1>
           <p className="text-muted-foreground">
             Your account is active, but no valid role is assigned. If you are a
-            customer, sign out and sign in again; otherwise contact an admin.
+            client user, sign out and sign in again; otherwise contact an admin.
           </p>
         </div>
         <div className="text-sm text-muted-foreground bg-muted rounded-lg p-3">
-          Signed in as <span className="font-medium text-foreground">{user.email}</span>
+          Signed in as{" "}
+          <span className="font-medium text-foreground">{user.email}</span>
         </div>
         <Button variant="outline" onClick={signOut} className="gap-2">
           <LogOut className="h-4 w-4" />
