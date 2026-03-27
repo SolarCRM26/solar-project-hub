@@ -332,25 +332,25 @@ const dealStageFlow: readonly DealFlowItem[] = [
   {
     key: "procurement",
     label: "procurement",
-    projectStage: "build_started",
+    projectStage: "design_approved",
     stageCardKey: "procurement",
   },
   {
     key: "installation",
     label: "installation",
-    projectStage: "qa_passed",
+    projectStage: "build_started",
     stageCardKey: "installation",
   },
   {
     key: "hr",
     label: "HR",
-    projectStage: null,
+    projectStage: "qa_passed",
     stageCardKey: "hr",
   },
   {
     key: "pv_monitor",
     label: "PV Monitor",
-    projectStage: null,
+    projectStage: "commissioned",
     stageCardKey: "pv_monitor",
   },
   {
@@ -364,12 +364,12 @@ const dealStageFlow: readonly DealFlowItem[] = [
 const projectStageToFlowKey: Record<string, DealFlowItem["key"]> = {
   lead_created: "site_survey",
   design_started: "design_started",
-  design_approved: "design_started",
+  design_approved: "procurement",
   proposal_approved: "proposal_submitted",
   contract_signed: "contract_signed",
-  build_started: "procurement",
-  qa_passed: "installation",
-  commissioned: "closeout_delivered",
+  build_started: "installation",
+  qa_passed: "hr",
+  commissioned: "pv_monitor",
   closeout_delivered: "closeout_delivered",
 };
 
@@ -1172,7 +1172,7 @@ const AdminProjectDetail = () => {
       <div>
         <h1 className="text-3xl font-bold">{project.name}</h1>
         <div className="flex items-center gap-2 mt-2">
-          <StageBadge stage={project.stage} />
+          <StageBadge stage={currentStage} />
           <span className="text-sm text-muted-foreground">{customerLabel}</span>
         </div>
       </div>
@@ -1461,17 +1461,17 @@ const AdminProjectDetail = () => {
                             </div>
 
                             {item.references?.length ? (
-                              <div className="rounded-2xl border border-amber-300/70 bg-amber-50/60 p-5 space-y-4">
+                              <div className="rounded-2xl border border-green-300/70 bg-green-50/60 p-5 space-y-4">
                                 <div className="flex items-center justify-between gap-4">
                                   <div className="min-w-0">
-                                    <p className="text-xl font-medium text-amber-900 truncate flex items-center gap-2">
-                                      <BookOpen className="h-5 w-5 text-amber-700" />
+                                    <p className="text-xl font-medium text-green-900 truncate flex items-center gap-2">
+                                      <BookOpen className="h-5 w-5 text-green-700" />
                                       {item.references[0]}
                                     </p>
                                   </div>
                                   <Label
                                     htmlFor={`visual-file-${item.id}`}
-                                    className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-400 bg-background px-4 text-sm font-medium text-amber-700 cursor-pointer hover:bg-amber-100"
+                                    className="inline-flex h-10 items-center justify-center rounded-xl border border-green-400 bg-background px-4 text-sm font-medium text-green-700 cursor-pointer hover:bg-green-100"
                                   >
                                     <Upload className="h-4 w-4 mr-2" /> Upload
                                   </Label>
@@ -1496,7 +1496,7 @@ const AdminProjectDetail = () => {
                                 {item.references.slice(1).map((reference) => (
                                   <p
                                     key={reference}
-                                    className="text-sm text-amber-800/90"
+                                    className="text-sm text-green-800/90"
                                   >
                                     {reference}
                                   </p>

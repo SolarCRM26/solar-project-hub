@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { Loader2, Clock, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resolveRoleHomeRoute } from "@/lib/auth-routing";
+import Landing from "./Landing";
 
 const Index = () => {
   const { user, roles, loading, signOut } = useAuth();
@@ -15,7 +16,8 @@ const Index = () => {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  // Show landing page for unauthenticated users
+  if (!user) return <Landing />;
 
   const homeRoute = resolveRoleHomeRoute(roles);
   if (homeRoute !== "/") {

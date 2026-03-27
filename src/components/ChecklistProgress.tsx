@@ -1,6 +1,6 @@
-import { Progress } from '@/components/ui/progress';
-import { CheckCircle2, Circle, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle2, Circle, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ChecklistProgressProps {
   totalItems: number;
@@ -17,8 +17,10 @@ export const ChecklistProgress = ({
   completedRequiredItems,
   className,
 }: ChecklistProgressProps) => {
-  const totalProgress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
-  const requiredProgress = requiredItems > 0 ? (completedRequiredItems / requiredItems) * 100 : 0;
+  const totalProgress =
+    totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+  const requiredProgress =
+    requiredItems > 0 ? (completedRequiredItems / requiredItems) * 100 : 0;
   const allRequiredComplete = requiredItems === completedRequiredItems;
 
   return (
@@ -34,8 +36,10 @@ export const ChecklistProgress = ({
         </div>
         {!allRequiredComplete && requiredItems > 0 && (
           <div className="flex items-center gap-1 rounded-full border bg-background px-2.5 py-1">
-            <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
-            <span>{requiredItems - completedRequiredItems} required pending</span>
+            <AlertCircle className="h-3 w-3 text-lime-600 dark:text-lime-400" />
+            <span>
+              {requiredItems - completedRequiredItems} required pending
+            </span>
           </div>
         )}
       </div>
@@ -60,19 +64,19 @@ export const ChecklistProgress = ({
               {allRequiredComplete ? (
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <AlertCircle className="h-4 w-4 text-lime-600 dark:text-lime-400" />
               )}
             </div>
             <span className="text-muted-foreground">
               {completedRequiredItems} / {requiredItems} required
             </span>
           </div>
-          <Progress 
-            value={requiredProgress} 
+          <Progress
+            value={requiredProgress}
             className={cn(
               "h-2.5",
-              allRequiredComplete && "bg-green-200 dark:bg-green-900"
-            )} 
+              allRequiredComplete && "bg-green-200 dark:bg-green-900",
+            )}
           />
         </div>
       )}

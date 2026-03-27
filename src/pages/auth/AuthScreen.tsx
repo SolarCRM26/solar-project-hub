@@ -225,15 +225,17 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-navy via-navy-light to-solar-dim p-10 text-white">
-        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-solar/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-success/20 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsl(var(--solar)/0.12),transparent_40%),radial-gradient(circle_at_80%_80%,hsl(var(--success)/0.14),transparent_35%)]" />
+    <div className="min-h-screen grid lg:grid-cols-2 bg-[#e2e3ea]">
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#1f2f3d] via-[#244154] to-[#2c3e2d] p-10 text-white">
+        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#4CAF50]/20 blur-3xl" />
+        <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#66bb6a]/20 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#4CAF50]/35 -skew-x-[28deg]" />
+        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#388E3C]/35 -skew-x-[28deg]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(129,199,132,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(102,187,106,0.18),transparent_35%)]" />
 
         <div className="relative z-10 flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-white/10 border border-white/20">
-            <Sun className="h-6 w-6 text-solar" />
+            <Sun className="h-6 w-6 text-[#81C784]" />
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">
@@ -270,8 +272,8 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
         </div>
       </aside>
 
-      <main className="relative flex items-center justify-center overflow-hidden bg-muted/30 p-6 sm:p-10 lg:p-12">
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom_right,hsl(var(--background)),hsl(var(--muted)))] opacity-80" />
+      <main className="relative flex items-center justify-center overflow-hidden bg-[#e2e3ea] p-6 sm:p-10 lg:p-12">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(76,175,80,0.1),transparent_28%),radial-gradient(circle_at_85%_90%,rgba(56,142,60,0.12),transparent_32%)]" />
         <div className="relative w-full max-w-lg space-y-4 animate-slide-in">
           <div className="lg:hidden flex items-center justify-center gap-2 text-center">
             <div className="p-2 rounded-lg bg-gradient-solar">
@@ -285,18 +287,18 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             </div>
           </div>
 
-          <Card className="w-full shadow-xl border-border/60 backdrop-blur-sm bg-card/95 transition-all duration-300">
+          <Card className="w-full shadow-2xl border border-[#d2d6df] backdrop-blur-sm bg-[#eef1f6]/95 transition-all duration-300 rounded-3xl">
             <CardHeader className="space-y-2 pb-4">
-              <div className="flex items-center gap-2 text-primary">
+              <div className="flex items-center gap-2 text-[#2E7D32]">
                 <ShieldCheck className="h-5 w-5" />
                 <span className="text-sm font-medium">
                   Secure Workspace Access
                 </span>
               </div>
-              <CardTitle className="text-3xl tracking-tight">
+              <CardTitle className="text-3xl tracking-tight text-[#131b2e]">
                 {isSignup ? "Create your account" : "Welcome back"}
               </CardTitle>
-              <CardDescription className="text-sm leading-relaxed">
+              <CardDescription className="text-sm leading-relaxed text-[#5f6779]">
                 {isSignup
                   ? "Create your account and start managing solar workflows with your team."
                   : "Sign in to continue managing projects, tasks, and client delivery."}
@@ -316,7 +318,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Jane Solar"
-                      className="h-11 transition-all duration-200"
+                      className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
                     />
                     {errors.fullName && (
                       <p className="text-sm text-destructive">
@@ -334,7 +336,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
-                    className="h-11 transition-all duration-200"
+                    className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
@@ -350,7 +352,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="h-11 pr-10 transition-all duration-200"
+                      className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
                     />
                     <Button
                       type="button"
@@ -390,7 +392,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                     >
                       <SelectTrigger
                         id="role"
-                        className="h-11 transition-all duration-200"
+                        className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
                       >
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
@@ -418,7 +420,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="h-11 pr-10 transition-all duration-200"
+                        className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
                       />
                       <Button
                         type="button"
@@ -448,7 +450,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-sm font-medium"
+                  className="w-full h-11 text-sm font-medium bg-[#4CAF50] text-white hover:bg-[#429c46]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -466,13 +468,13 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
                 <div className="h-px w-full bg-border/70" />
 
-                <p className="text-sm text-muted-foreground text-center">
+                <p className="text-sm text-[#6a7282] text-center">
                   {isSignup
                     ? "Already have an account?"
                     : "Don't have an account?"}{" "}
                   <Link
                     to={isSignup ? "/login" : "/signup"}
-                    className="text-primary font-medium hover:text-primary/80 transition-colors"
+                    className="text-[#2E7D32] font-semibold hover:text-[#256b29] transition-colors"
                   >
                     {isSignup ? "Sign in" : "Create one"}
                   </Link>
@@ -481,7 +483,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             </CardContent>
           </Card>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-[#6f7685]">
             Trusted workspace for modern solar operations teams.
           </p>
         </div>

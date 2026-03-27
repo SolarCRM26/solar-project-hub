@@ -48,6 +48,18 @@ const stages = Object.entries(stageLabels).map(([value, label]) => ({
   label,
 }));
 
+const dealCardStageLabels: Record<string, string> = {
+  lead_created: "Site Survey",
+  design_started: "Design Started",
+  proposal_approved: "Proposal Submitted",
+  contract_signed: "Contract Signed",
+  design_approved: "Procurement",
+  build_started: "Installation",
+  qa_passed: "HR",
+  commissioned: "PV Monitor",
+  closeout_delivered: "Closeout Delivered",
+};
+
 const AdminProjects = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -809,7 +821,9 @@ const AdminProjects = () => {
                         >
                           <p className="text-[11px] text-[#7A859F]">Stage</p>
                           <p className="truncate text-sm font-semibold text-[#1E2540]">
-                            {stageLabels[project.stage] || project.stage}
+                            {dealCardStageLabels[project.stage] ||
+                              stageLabels[project.stage] ||
+                              project.stage}
                           </p>
                           <div className="mt-2 flex gap-1">
                             {Array.from({ length: 7 }).map((_, idx) => (
