@@ -39,6 +39,7 @@ import ExecutionDashboard from "./pages/execution/ExecutionDashboard";
 import ClientDashboard from "./pages/client/ClientDashboard";
 import CustomerDocuments from "./pages/customer/CustomerDocuments";
 import CustomerCloseout from "./pages/customer/CustomerCloseout";
+import PublicInfoPage from "./pages/public/PublicInfoPage";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Index />} />
+              <Route path="/info/:slug" element={<PublicInfoPage />} />
 
               {/* Admin-only routes */}
               <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>

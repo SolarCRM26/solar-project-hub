@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Menu,
   X,
@@ -20,6 +20,13 @@ import {
   Bell,
 } from "lucide-react";
 import { useState } from "react";
+
+const headerLinks = [
+  { label: "About", to: "/info/about" },
+  { label: "Features", to: "/info/features" },
+  { label: "Changelog", to: "/info/changelog" },
+  { label: "FAQs", to: "/info/faqs" },
+];
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -43,14 +50,14 @@ const Landing = () => {
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
-            {["About", "Features", "Changelog's", "FAQ's"].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace("'", "")}`}
+            {headerLinks.map((item) => (
+              <Link
+                key={item.label}
+                to={item.to}
                 className="text-gray-600 hover:text-gray-900 text-sm font-medium transition"
               >
-                {item}
-              </a>
+                {item.label}
+              </Link>
             ))}
           </nav>
 
@@ -78,15 +85,15 @@ const Landing = () => {
 
         {mobileMenuOpen && (
           <nav className="md:hidden mt-4 pb-4 space-y-3 border-t border-gray-300/40 pt-4 bg-[#e2e3ea]">
-            {["About", "Features", "Changelog's", "FAQ's"].map((item) => (
-              <a
-                key={item}
-                href={`#${item.toLowerCase().replace("'", "")}`}
+            {headerLinks.map((item) => (
+              <Link
+                key={item.label}
+                to={item.to}
                 className="block text-gray-700 hover:text-[#4CAF50] font-medium"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {item}
-              </a>
+                {item.label}
+              </Link>
             ))}
             <Button
               onClick={() => navigate("/login")}
@@ -420,22 +427,23 @@ const Landing = () => {
       </section>
 
       {/* ===== HOW IT WORKS ===== */}
-      <section className="bg-[#2c3e2d] py-20 lg:py-28 relative overflow-hidden">
-        {/* Background accents */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[#4CAF50]/8 rounded-full blur-[150px] pointer-events-none"></div>
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#4CAF50]/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <section className="bg-[#233625] py-20 lg:py-28 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-0 h-full w-full bg-[radial-gradient(circle_at_20%_20%,rgba(129,199,132,0.16),transparent_34%),radial-gradient(circle_at_85%_70%,rgba(76,175,80,0.18),transparent_36%)]"></div>
+        </div>
 
         <div className="max-w-[1400px] mx-auto px-6 lg:px-12 relative z-10">
-          <div className="text-center mb-16">
-            <span className="inline-block bg-[#4CAF50]/15 text-[#81C784] text-xs font-semibold rounded-full px-4 py-1.5 mb-4 uppercase tracking-wider">
+          <div className="max-w-3xl mx-auto text-center mb-14">
+            <span className="inline-flex items-center gap-2 bg-[#4CAF50]/15 text-[#9fe0a2] text-xs font-semibold rounded-full px-4 py-1.5 mb-4 uppercase tracking-wider">
               How It Works
+              <span className="h-1.5 w-1.5 rounded-full bg-[#4CAF50]" />3 Steps
             </span>
-            <h2 className="text-4xl lg:text-5xl font-black text-white mb-4">
-              Get started in minutes
+            <h2 className="text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
+              From installation to daily control
             </h2>
-            <p className="text-[#a3b8a4] text-lg max-w-2xl mx-auto">
-              Three simple steps to take full control of your solar energy
-              system.
+            <p className="text-[#b6c9b6] text-lg">
+              A guided onboarding flow that connects hardware, unlocks insights,
+              and starts saving from day one.
             </p>
           </div>
 
@@ -444,47 +452,54 @@ const Landing = () => {
               {
                 step: "01",
                 icon: Zap,
-                title: "Connect Your System",
-                desc: "Link your solar panels, inverters, and batteries through our plug-and-play integration. Compatible with all major hardware brands.",
+                title: "Connect Hardware",
+                desc: "Link your solar panels, inverter, and battery in a guided setup that supports major manufacturers.",
+                badge: "~5 min setup",
               },
               {
                 step: "02",
                 icon: Gauge,
-                title: "Monitor & Optimize",
-                desc: "Watch your energy flow in real-time. Our AI analyzes patterns and suggests optimizations to boost performance by up to 30%.",
+                title: "Track and Optimize",
+                desc: "Live telemetry reveals production patterns while optimization tips help increase output and reduce waste.",
+                badge: "Real-time insights",
               },
               {
                 step: "03",
                 icon: Sun,
-                title: "Save & Control",
-                desc: "Reduce electricity bills, track ROI, and control your entire system remotely from any device, anywhere in the world.",
+                title: "Automate Savings",
+                desc: "Apply schedules and alerts to control loads, protect battery health, and maximize your monthly ROI.",
+                badge: "Any device, anywhere",
               },
             ].map((item, i) => (
               <div key={i} className="relative group">
-                <div className="bg-[#354f36] border border-[#4a6b4b] rounded-2xl p-7 lg:p-8 hover:bg-[#3a5a3b] hover:border-[#4CAF50]/40 transition-all duration-300">
-                  {/* Step number + icon row */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-12 h-12 rounded-full bg-[#4CAF50] flex items-center justify-center shadow-lg shadow-[#4CAF50]/20">
-                      <span className="text-white font-black text-sm">
-                        {item.step}
-                      </span>
+                <article className="h-full rounded-3xl border border-[#4f6851] bg-gradient-to-b from-[#2f4532] to-[#2a3f2d] p-6 lg:p-7 shadow-[0_20px_40px_rgba(0,0,0,0.18)] transition-all duration-300 group-hover:-translate-y-1 group-hover:border-[#78c67a]/60 group-hover:shadow-[0_26px_46px_rgba(0,0,0,0.24)]">
+                  <div className="flex items-start justify-between gap-4 mb-6">
+                    <div className="rounded-2xl bg-[#4CAF50]/15 border border-[#81C784]/35 px-3 py-1.5">
+                      <p className="text-[#9fe0a2] text-xs font-semibold tracking-[0.12em] uppercase">
+                        Step {item.step}
+                      </p>
                     </div>
-                    <div className="w-11 h-11 rounded-xl bg-[#4CAF50]/10 flex items-center justify-center">
-                      <item.icon className="w-5 h-5 text-[#81C784]" />
+                    <div className="w-12 h-12 rounded-xl bg-[#4CAF50] flex items-center justify-center shadow-lg shadow-[#4CAF50]/25">
+                      <item.icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-3">
+
+                  <h3 className="text-xl font-bold text-white mb-2">
                     {item.title}
                   </h3>
-                  <p className="text-[#a3b8a4] text-sm leading-relaxed">
+                  <p className="text-[#b7c8b8] text-sm leading-relaxed mb-5">
                     {item.desc}
                   </p>
-                </div>
-                {/* Connecting arrow between cards */}
+
+                  <div className="inline-flex items-center rounded-full border border-[#6ca96e]/40 bg-[#4CAF50]/12 px-3 py-1 text-xs font-medium text-[#bce9be]">
+                    {item.badge}
+                  </div>
+                </article>
+
                 {i < 2 && (
                   <div className="hidden md:flex absolute top-1/2 -right-4 lg:-right-5 -translate-y-1/2 z-20">
-                    <div className="w-8 h-8 lg:w-9 lg:h-9 rounded-full bg-[#4CAF50] flex items-center justify-center shadow-lg">
-                      <ArrowRight className="w-4 h-4 text-white" />
+                    <div className="w-9 h-9 rounded-full border border-[#81C784]/40 bg-[#2b4230] flex items-center justify-center shadow-lg">
+                      <ArrowRight className="w-4 h-4 text-[#9fe0a2]" />
                     </div>
                   </div>
                 )}
@@ -680,142 +695,6 @@ const Landing = () => {
         </div>
       </section>
 
-      {/* ===== PRICING / PLANS ===== */}
-      <section className="bg-[#d7d8e0] py-20 lg:py-28">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-          <div className="text-center mb-16">
-            <span className="inline-block bg-[#E8F5E9] text-[#2E7D32] text-xs font-semibold rounded-full px-4 py-1.5 mb-4 uppercase tracking-wider">
-              Pricing
-            </span>
-            <h2 className="text-4xl lg:text-5xl font-black text-gray-900 mb-4">
-              Plans for every system size
-            </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Start free and scale as your system grows. No hidden fees, cancel
-              anytime.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                plan: "Starter",
-                price: "Free",
-                period: "forever",
-                desc: "Perfect for single home installations",
-                features: [
-                  "1 solar system",
-                  "Real-time monitoring",
-                  "Basic analytics",
-                  "Mobile app access",
-                  "Email alerts",
-                ],
-                cta: "Get Started",
-                popular: false,
-              },
-              {
-                plan: "Pro",
-                price: "$19",
-                period: "/month",
-                desc: "For power users and small businesses",
-                features: [
-                  "Up to 5 systems",
-                  "Advanced analytics & AI",
-                  "Battery management",
-                  "Priority support",
-                  "Custom alerts",
-                  "API access",
-                ],
-                cta: "Start Free Trial",
-                popular: true,
-              },
-              {
-                plan: "Enterprise",
-                price: "Custom",
-                period: "",
-                desc: "Large-scale commercial deployments",
-                features: [
-                  "Unlimited systems",
-                  "Dedicated account manager",
-                  "Custom integrations",
-                  "SLA guarantee",
-                  "On-site support",
-                  "White-label option",
-                ],
-                cta: "Contact Sales",
-                popular: false,
-              },
-            ].map((tier, i) => (
-              <div
-                key={i}
-                className={`rounded-2xl p-7 border transition-shadow ${
-                  tier.popular
-                    ? "bg-[#2c3e2d] text-white border-[#4CAF50] shadow-2xl shadow-[#4CAF50]/10 relative"
-                    : "bg-[#e2e3ea] border-[#cfd0d8] hover:shadow-lg"
-                }`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#4CAF50] text-white text-xs font-bold px-4 py-1 rounded-full">
-                    MOST POPULAR
-                  </div>
-                )}
-                <div className="mb-6">
-                  <h3
-                    className={`text-lg font-bold mb-1 ${tier.popular ? "text-white" : "text-gray-900"}`}
-                  >
-                    {tier.plan}
-                  </h3>
-                  <p
-                    className={`text-sm ${tier.popular ? "text-gray-400" : "text-gray-500"}`}
-                  >
-                    {tier.desc}
-                  </p>
-                </div>
-                <div className="mb-6">
-                  <span
-                    className={`text-4xl font-black ${tier.popular ? "text-[#4CAF50]" : "text-gray-900"}`}
-                  >
-                    {tier.price}
-                  </span>
-                  <span
-                    className={`text-sm ${tier.popular ? "text-gray-400" : "text-gray-500"}`}
-                  >
-                    {tier.period}
-                  </span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {tier.features.map((feature, j) => (
-                    <li key={j} className="flex items-center gap-2 text-sm">
-                      <Check
-                        className={`w-4 h-4 flex-shrink-0 ${tier.popular ? "text-[#4CAF50]" : "text-[#4CAF50]"}`}
-                      />
-                      <span
-                        className={
-                          tier.popular ? "text-gray-300" : "text-gray-600"
-                        }
-                      >
-                        {feature}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  onClick={() => navigate("/signup")}
-                  className={`w-full rounded-full font-semibold h-11 ${
-                    tier.popular
-                      ? "bg-[#4CAF50] hover:bg-[#388E3C] text-white"
-                      : "bg-gray-900 hover:bg-gray-800 text-white"
-                  }`}
-                >
-                  {tier.cta}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ===== CTA SECTION ===== */}
       <section className="bg-[#2c3e2d] py-20 lg:py-28 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
@@ -841,7 +720,7 @@ const Landing = () => {
             </Button>
             <Button
               variant="outline"
-              className="border-gray-700 text-gray-300 hover:text-white hover:bg-gray-800 font-semibold rounded-full px-8 h-13 text-base"
+              className="border-gray-700 text-black hover:text-white hover:bg-gray-800 font-semibold rounded-full px-8 h-13 text-base"
             >
               Schedule a Demo
             </Button>
@@ -872,27 +751,36 @@ const Landing = () => {
               <h4 className="text-white font-semibold mb-6">Product</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <a
-                    href="#features"
+                  <Link
+                    to="/info/features"
                     className="hover:text-[#4CAF50] transition"
                   >
                     Features
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
-                    Pricing
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/integrations"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Integrations
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/changelog"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Changelog
-                  </a>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/info/faqs"
+                    className="hover:text-[#4CAF50] transition"
+                  >
+                    FAQs
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -901,24 +789,36 @@ const Landing = () => {
               <h4 className="text-white font-semibold mb-6">Company</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <a href="#about" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/about"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     About
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/blog"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Blog
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/careers"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Careers
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/contact"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Contact
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -927,24 +827,36 @@ const Landing = () => {
               <h4 className="text-white font-semibold mb-6">Legal</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/privacy"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Privacy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/terms"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Terms
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/security"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Security
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-[#4CAF50] transition">
+                  <Link
+                    to="/info/compliance"
+                    className="hover:text-[#4CAF50] transition"
+                  >
                     Compliance
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -956,8 +868,8 @@ const Landing = () => {
                 © 2026 Solar Tracker. All rights reserved.
               </p>
               <div className="flex gap-6">
-                <a
-                  href="#"
+                <Link
+                  to="/info/support"
                   className="text-gray-400 hover:text-[#4CAF50] transition"
                 >
                   <span className="sr-only">Twitter</span>
@@ -968,9 +880,9 @@ const Landing = () => {
                   >
                     <path d="M8.29 20c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
                   </svg>
-                </a>
-                <a
-                  href="#"
+                </Link>
+                <Link
+                  to="/info/contact"
                   className="text-gray-400 hover:text-[#4CAF50] transition"
                 >
                   <span className="sr-only">LinkedIn</span>
@@ -981,7 +893,7 @@ const Landing = () => {
                   >
                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                   </svg>
-                </a>
+                </Link>
               </div>
             </div>
           </div>
