@@ -290,16 +290,16 @@ const AdminProjects = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FolderKanban className="h-8 w-8 text-primary" /> Projects
+            <FolderKanban className="h-8 w-8 text-primary" /> Deals
           </h1>
           <p className="text-muted-foreground mt-1">
-            {projects.length} total projects
+            {projects.length} total deals
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" /> New Project
+              <Plus className="h-4 w-4 mr-2" /> New Deal
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
@@ -485,7 +485,7 @@ const AdminProjects = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search projects..."
+            placeholder="Search deals..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -511,8 +511,7 @@ const AdminProjects = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead>Client</TableHead>
+                <TableHead>Deal</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Stage</TableHead>
                 <TableHead>Capacity</TableHead>
@@ -522,12 +521,12 @@ const AdminProjects = () => {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7}>
+                  <TableCell colSpan={5}>
                     <EmptyState
                       icon={FolderOpen}
-                      title="No projects found"
-                      description="Create your first project to get started or adjust your search filters"
-                      actionLabel="Create Project"
+                      title="No deals found"
+                      description="Create your first deal to get started or adjust your search filters"
+                      actionLabel="Create Deal"
                       onAction={() => setOpen(true)}
                     />
                   </TableCell>
@@ -541,11 +540,6 @@ const AdminProjects = () => {
                   >
                     <TableCell className="font-medium">
                       {project.name}
-                    </TableCell>
-                    <TableCell>
-                      {projects.find((p) => p.id === project.id)?.client_id
-                        ? "View Details"
-                        : "—"}
                     </TableCell>
                     <TableCell className="capitalize">
                       {project.project_type?.replace("_", " ")}

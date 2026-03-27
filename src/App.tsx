@@ -25,6 +25,8 @@ import AdminChecklists from "./pages/admin/AdminChecklists";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminRoleRequests from "./pages/admin/AdminRoleRequests";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+import AdminHR from "./pages/admin/AdminHR";
+import AdminPVMonitor from "./pages/admin/AdminPVMonitor";
 import SalesDashboard from "./pages/sales/SalesDashboard";
 import EngineerDashboard from "./pages/engineer/EngineerDashboard";
 import EngineerTasks from "./pages/engineer/EngineerTasks";
@@ -75,6 +77,11 @@ const App = () => (
                   <Route
                     path="/admin/checklists"
                     element={<AdminChecklists />}
+                  />
+                  <Route path="/admin/hr" element={<AdminHR />} />
+                  <Route
+                    path="/admin/pv-monitor"
+                    element={<AdminPVMonitor />}
                   />
                   <Route path="/admin/reports" element={<AdminReports />} />
                   <Route

@@ -37,10 +37,12 @@ import type { AppRole } from "@/lib/auth-routing";
 
 const adminItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-  { title: "Projects", url: "/admin/projects", icon: FolderKanban },
-  { title: "Tasks", url: "/admin/tasks", icon: ListTodo },
+  { title: "Deals", url: "/admin/projects", icon: FolderKanban },
+  { title: "Work Orders", url: "/admin/tasks", icon: ListTodo },
   { title: "Documents", url: "/admin/documents", icon: FileText },
-  { title: "Checklists", url: "/admin/checklists", icon: ListChecks },
+  { title: "Form Checklist", url: "/admin/checklists", icon: ListChecks },
+  { title: "HR", url: "/admin/hr", icon: Users },
+  { title: "PV Monitor", url: "/admin/pv-monitor", icon: BarChart3 },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Audit Logs", url: "/admin/audit-logs", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
