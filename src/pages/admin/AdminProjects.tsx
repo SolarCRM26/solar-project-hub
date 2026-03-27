@@ -15,14 +15,6 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -30,7 +22,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { StageBadge, stageLabels } from "@/components/StatusBadges";
-import { Plus, FolderKanban, Search, FolderOpen } from "lucide-react";
+import {
+  Plus,
+  FolderKanban,
+  Search,
+  FolderOpen,
+  MoreHorizontal,
+  TrendingUp,
+  TrendingDown,
+  Rows3,
+  LayoutGrid,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
@@ -54,6 +56,7 @@ const AdminProjects = () => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStage, setFilterStage] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const [form, setForm] = useState({
     name: "",
@@ -278,6 +281,78 @@ const AdminProjects = () => {
     return matchSearch && matchStage;
   });
 
+  const formatDate = (value?: string | null) => {
+    if (!value) return "No target date";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return parsed.toLocaleDateString();
+  };
+
+  const getTypeLabel = (type?: string | null) =>
+    type ? type.replace("_", " ") : "Unspecified";
+
+  const hash = (value: string) =>
+    value.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+  const getInstallationScore = (stage: string) => {
+    const progress = getProgress(stage);
+    // Keep a minimum visible score while still reflecting real stage progress.
+    return Math.max(5, progress);
+  };
+
+  const getTrend = (project: any) => {
+    const delta = (hash(project.name) % 21) - 10;
+    const pct = 28 + Math.abs(delta) * 3;
+    return { up: delta >= 0, pct };
+  };
+
+  const getPeopleCount = (project: any) => 2 + (hash(project.id) % 6);
+
+  const getProgress = (stage: string) => {
+    const idx = stages.findIndex((s) => s.value === stage);
+    if (idx < 0) return 0;
+    return Math.round(((idx + 1) / stages.length) * 100);
+  };
+
+  const getScoreState = (score: number) => {
+    if (score >= 75)
+      return {
+        label: "Good",
+        color: "#31B36B",
+        textClass: "text-[#31B36B]",
+      };
+    if (score >= 55)
+      return {
+        label: "Medium",
+        color: "#E5A521",
+        textClass: "text-[#E5A521]",
+      };
+    return { label: "Low", color: "#E34B6B", textClass: "text-[#E34B6B]" };
+  };
+
+  const getSparklinePoints = (project: any, up: boolean) => {
+    const seed = hash(`${project.id}-${project.stage}`);
+    const points = Array.from({ length: 7 }, (_, i) => {
+      const x = i * 16;
+      const wave = Math.sin((seed + i) * 0.9) * 3.5;
+      const slope = up ? -i * 0.7 : i * 0.7;
+      const y = Math.min(22, Math.max(4, 12 + wave + slope));
+      return `${x},${y.toFixed(1)}`;
+    });
+    return points.join(" ");
+  };
+
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((chunk) => chunk[0]?.toUpperCase() || "")
+      .join("") || "D";
+
+  const stageCount = (stage: string) =>
+    projects.filter((p) => p.stage === stage).length;
+
   if (isLoading)
     return (
       <div className="flex items-center justify-center h-64">
@@ -481,7 +556,7 @@ const AdminProjects = () => {
         </Dialog>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex gap-3 flex-col lg:flex-row lg:items-center lg:justify-between">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -491,71 +566,286 @@ const AdminProjects = () => {
             className="pl-9"
           />
         </div>
-        <Select value={filterStage} onValueChange={setFilterStage}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by stage" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Stages</SelectItem>
-            {stages.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center rounded-lg border border-border bg-card p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
+                viewMode === "list"
+                  ? "bg-[#5B5FE8] text-white"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Rows3 className="h-3.5 w-3.5" />
+              List
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
+                viewMode === "grid"
+                  ? "bg-[#5B5FE8] text-white"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Grid
+            </button>
+          </div>
+
+          <Select value={filterStage} onValueChange={setFilterStage}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by stage" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Stages</SelectItem>
+              {stages.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <Card className="border-border/50">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Deal</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Stage</TableHead>
-                <TableHead>Capacity</TableHead>
-                <TableHead>Target</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5}>
-                    <EmptyState
-                      icon={FolderOpen}
-                      title="No deals found"
-                      description="Create your first deal to get started or adjust your search filters"
-                      actionLabel="Create Deal"
-                      onAction={() => setOpen(true)}
-                    />
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filtered.map((project) => (
-                  <TableRow
-                    key={project.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => navigate(`/admin/projects/${project.id}`)}
-                  >
-                    <TableCell className="font-medium">
-                      {project.name}
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {project.project_type?.replace("_", " ")}
-                    </TableCell>
-                    <TableCell>
-                      <StageBadge stage={project.stage} />
-                    </TableCell>
-                    <TableCell>
-                      {project.capacity_kw ? `${project.capacity_kw} kW` : "—"}
-                    </TableCell>
-                    <TableCell>{project.target_completion || "—"}</TableCell>
-                  </TableRow>
-                ))
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => setFilterStage("all")}
+          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+            filterStage === "all"
+              ? "border-[#5B5FE8]/40 bg-[#5B5FE8]/10 text-[#5B5FE8]"
+              : "border-border bg-card text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          All ({projects.length})
+        </button>
+        {stages.slice(0, 5).map((s) => (
+          <button
+            key={s.value}
+            type="button"
+            onClick={() => setFilterStage(s.value)}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+              filterStage === s.value
+                ? "border-[#5B5FE8]/40 bg-[#5B5FE8]/10 text-[#5B5FE8]"
+                : "border-border bg-card text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {s.label} ({stageCount(s.value)})
+          </button>
+        ))}
+      </div>
+
+      <Card className="overflow-hidden border-[#E5EAF5] bg-[#F4F7FD]">
+        <CardHeader className="border-b border-[#E5EAF5] bg-transparent">
+          <CardTitle className="text-lg">Deal Pipeline</CardTitle>
+          <p className="text-sm text-[#697086]">
+            {filtered.length} of {projects.length} deals visible
+          </p>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-5">
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={FolderOpen}
+              title="No deals found"
+              description="Create your first deal to get started or adjust your search filters"
+              actionLabel="Create Deal"
+              onAction={() => setOpen(true)}
+            />
+          ) : (
+            <div
+              className={
+                viewMode === "list"
+                  ? "space-y-3"
+                  : "grid gap-3 sm:grid-cols-2 2xl:grid-cols-3"
+              }
+            >
+              {filtered.map((project) =>
+                (() => {
+                  const score = getInstallationScore(project.stage);
+                  const scoreState = getScoreState(score);
+                  const trend = getTrend(project);
+                  const people = getPeopleCount(project);
+                  const progress = getProgress(project.stage);
+                  const stageIndicatorColor =
+                    score >= 75
+                      ? "#31B36B"
+                      : score >= 55
+                        ? "#E5A521"
+                        : "#E34B6B";
+                  const filledSegments = Math.max(
+                    1,
+                    Math.round((progress / 100) * 7),
+                  );
+
+                  return (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() => navigate(`/admin/projects/${project.id}`)}
+                      className="group w-full rounded-2xl border border-[#E6EBF5] bg-white px-4 py-3 text-left shadow-[0_1px_0_#edf1f7] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#C8D2EB] hover:shadow-[0_8px_22px_rgba(42,63,120,0.12)]"
+                    >
+                      <div
+                        className={
+                          viewMode === "list"
+                            ? "flex flex-col gap-4 xl:flex-row xl:items-center xl:gap-5"
+                            : "grid gap-4 sm:grid-cols-2"
+                        }
+                      >
+                        <div
+                          className={`flex min-w-0 items-start gap-3 ${
+                            viewMode === "list" ? "xl:w-[32%]" : ""
+                          }`}
+                        >
+                          <div
+                            className="mt-0.5 rounded-md p-1.5"
+                            style={{
+                              border: `1px solid ${stageIndicatorColor}33`,
+                              backgroundColor: `${stageIndicatorColor}14`,
+                            }}
+                          >
+                            <FolderKanban
+                              className="h-4 w-4"
+                              style={{ color: stageIndicatorColor }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-base font-semibold text-[#1E2540]">
+                              {project.name}
+                            </p>
+                            <p className="mt-1 inline-flex rounded-md bg-[#EEF2FA] px-2 py-0.5 text-xs text-[#5C6785] capitalize">
+                              {getTypeLabel(project.project_type)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`items-center ${
+                            viewMode === "list"
+                              ? "hidden xl:flex xl:w-[14%]"
+                              : "flex"
+                          }`}
+                        >
+                          <div className="flex -space-x-2">
+                            {Array.from({ length: Math.min(3, people) }).map(
+                              (_, idx) => (
+                                <div
+                                  key={`${project.id}-avatar-${idx}`}
+                                  className="h-7 w-7 rounded-full border-2 border-white bg-[#DEE5F7] text-[10px] font-semibold text-[#485578] grid place-items-center"
+                                >
+                                  {getInitials(project.name)}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                          <span className="ml-2 text-xs text-[#7A859F]">
+                            {people} People
+                          </span>
+                        </div>
+
+                        <div
+                          className={
+                            viewMode === "list"
+                              ? "hidden xl:block xl:w-[14%]"
+                              : "block"
+                          }
+                        >
+                          <svg viewBox="0 0 96 26" className="h-7 w-24">
+                            <polyline
+                              fill="none"
+                              stroke={trend.up ? "#5B5FE8" : "#E34B6B"}
+                              strokeWidth="2"
+                              points={getSparklinePoints(project, trend.up)}
+                            />
+                          </svg>
+                          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-[#7A859F]">
+                            Trends
+                            {trend.up ? (
+                              <TrendingUp className="h-3 w-3 text-[#31B36B]" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3 text-[#E34B6B]" />
+                            )}
+                            <span
+                              className={
+                                trend.up ? "text-[#31B36B]" : "text-[#E34B6B]"
+                              }
+                            >
+                              {trend.pct}%
+                            </span>
+                          </p>
+                        </div>
+
+                        <div
+                          className={`flex items-center gap-2 ${
+                            viewMode === "list" ? "xl:w-[14%]" : ""
+                          }`}
+                        >
+                          <div
+                            className="relative h-10 w-10 rounded-full"
+                            style={{
+                              background: `conic-gradient(${scoreState.color} ${score * 3.6}deg, #E9EDF7 ${score * 3.6}deg)`,
+                            }}
+                          >
+                            <div className="absolute inset-[3px] grid place-items-center rounded-full bg-white text-xs font-semibold text-[#1F2744]">
+                              {score}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-[11px] text-[#7A859F]">
+                              Installation Score
+                            </p>
+                            <p
+                              className={`text-xs font-medium ${scoreState.textClass}`}
+                            >
+                              {scoreState.label}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`${viewMode === "list" ? "xl:w-[22%]" : ""} ${viewMode === "grid" ? "sm:col-span-2" : ""}`}
+                        >
+                          <p className="text-[11px] text-[#7A859F]">Stage</p>
+                          <p className="truncate text-sm font-semibold text-[#1E2540]">
+                            {stageLabels[project.stage] || project.stage}
+                          </p>
+                          <div className="mt-2 flex gap-1">
+                            {Array.from({ length: 7 }).map((_, idx) => (
+                              <span
+                                key={`${project.id}-segment-${idx}`}
+                                className="h-1.5 w-4 rounded-full"
+                                style={{
+                                  backgroundColor:
+                                    idx < filledSegments
+                                      ? stageIndicatorColor
+                                      : "#DEE4F1",
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <p className="mt-1 text-[11px] text-[#7A859F]">
+                            Target {formatDate(project.target_completion)}
+                          </p>
+                        </div>
+
+                        <div
+                          className={`ml-auto ${
+                            viewMode === "list" ? "hidden xl:block" : "block"
+                          }`}
+                        >
+                          <div className="rounded-full p-1.5 text-[#8A94AB] transition-colors group-hover:bg-[#F2F5FB] group-hover:text-[#5B5FE8]">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })(),
               )}
-            </TableBody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

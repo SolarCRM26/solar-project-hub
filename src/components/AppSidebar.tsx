@@ -39,7 +39,6 @@ const adminItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Deals", url: "/admin/projects", icon: FolderKanban },
   { title: "Work Orders", url: "/admin/tasks", icon: ListTodo },
-  { title: "Documents", url: "/admin/documents", icon: FileText },
   { title: "Form Checklist", url: "/admin/checklists", icon: ListChecks },
   { title: "HR", url: "/admin/hr", icon: Users },
   { title: "PV Monitor", url: "/admin/pv-monitor", icon: BarChart3 },

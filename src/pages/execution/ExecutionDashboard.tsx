@@ -128,7 +128,7 @@ const ExecutionDashboard = () => {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatsCard
-          title="Assigned Projects"
+          title="Assigned Deals"
           value={projects.length}
           icon={FolderKanban}
           description="Current field scope"
@@ -156,15 +156,13 @@ const ExecutionDashboard = () => {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card className="border-border/60">
           <CardHeader>
-            <CardTitle className="text-lg">
-              Assigned Project Portfolio
-            </CardTitle>
+            <CardTitle className="text-lg">Assigned Deal Portfolio</CardTitle>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Project</TableHead>
+                  <TableHead>Deal</TableHead>
                   <TableHead>Stage</TableHead>
                   <TableHead>Capacity</TableHead>
                 </TableRow>
@@ -176,7 +174,7 @@ const ExecutionDashboard = () => {
                       colSpan={3}
                       className="text-center text-muted-foreground py-8"
                     >
-                      No assigned projects
+                      No assigned deals
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -222,7 +220,7 @@ const ExecutionDashboard = () => {
                         {task.title}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {(task as any).projects?.name || "No project linked"}
+                        {(task as any).projects?.name || "No deal linked"}
                       </p>
                     </div>
                     <div className="text-right space-y-1">

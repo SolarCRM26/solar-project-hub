@@ -1,45 +1,69 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import StatsCard from '@/components/StatsCard';
-import { StageBadge, StatusBadge, stageLabels } from '@/components/StatusBadges';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FolderKanban, Zap, ListTodo, Clock, Sun } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import StatsCard from "@/components/StatsCard";
+import {
+  StageBadge,
+  StatusBadge,
+  stageLabels,
+} from "@/components/StatusBadges";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { FolderKanban, Zap, ListTodo, Clock, Sun } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
   const { data: projects = [] } = useQuery({
-    queryKey: ['projects'],
+    queryKey: ["projects"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('projects').select('*, clients(name)').order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*, clients(name)")
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ["tasks"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('tasks').select('*, projects(name)').order('due_date', { ascending: true });
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*, projects(name)")
+        .order("due_date", { ascending: true });
       if (error) throw error;
       return data;
     },
   });
 
   const totalProjects = projects.length;
-  const activeProjects = projects.filter(p => !['closeout_delivered', 'lead_created'].includes(p.stage)).length;
-  const tasksDue = tasks.filter(t => t.status !== 'completed' && t.due_date && new Date(t.due_date) <= new Date(Date.now() + 7 * 86400000)).length;
-  const completedTasks = tasks.filter(t => t.status === 'completed').length;
+  const activeProjects = projects.filter(
+    (p) => !["closeout_delivered", "lead_created"].includes(p.stage),
+  ).length;
+  const tasksDue = tasks.filter(
+    (t) =>
+      t.status !== "completed" &&
+      t.due_date &&
+      new Date(t.due_date) <= new Date(Date.now() + 7 * 86400000),
+  ).length;
+  const completedTasks = tasks.filter((t) => t.status === "completed").length;
 
   const stageGroups = projects.reduce((acc: Record<string, number>, p) => {
     acc[p.stage] = (acc[p.stage] || 0) + 1;
     return acc;
   }, {});
 
-  const recentProjects = projects.slice(0, 5);
-  const urgentTasks = tasks.filter(t => t.status !== 'completed').slice(0, 5);
+  const recentDeals = projects.slice(0, 5);
+  const urgentTasks = tasks.filter((t) => t.status !== "completed").slice(0, 5);
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -48,33 +72,61 @@ const AdminDashboard = () => {
           <Sun className="h-8 w-8 text-primary" />
           Dashboard
         </h1>
-        <p className="text-muted-foreground mt-1">Overview of all solar projects and operations</p>
+        <p className="text-muted-foreground mt-1">
+          Overview of all solar deals and operations
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard title="Total Projects" value={totalProjects} icon={FolderKanban} description="All time" />
-        <StatsCard title="Active Projects" value={activeProjects} icon={Zap} description="Currently in progress" />
-        <StatsCard title="Tasks Due (7d)" value={tasksDue} icon={Clock} description="Due within a week" />
-        <StatsCard title="Completed Tasks" value={completedTasks} icon={ListTodo} description="All time" />
+        <StatsCard
+          title="Total Deals"
+          value={totalProjects}
+          icon={FolderKanban}
+          description="All time"
+        />
+        <StatsCard
+          title="Active Deals"
+          value={activeProjects}
+          icon={Zap}
+          description="Currently in progress"
+        />
+        <StatsCard
+          title="Tasks Due (7d)"
+          value={tasksDue}
+          icon={Clock}
+          description="Due within a week"
+        />
+        <StatsCard
+          title="Completed Tasks"
+          value={completedTasks}
+          icon={ListTodo}
+          description="All time"
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg">Projects by Stage</CardTitle>
+            <CardTitle className="text-lg">Deals by Stage</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {Object.entries(stageLabels).map(([key, label]) => {
                 const count = stageGroups[key] || 0;
-                const pct = totalProjects > 0 ? (count / totalProjects) * 100 : 0;
+                const pct =
+                  totalProjects > 0 ? (count / totalProjects) * 100 : 0;
                 return (
                   <div key={key} className="flex items-center gap-3">
                     <StageBadge stage={key} />
                     <div className="flex-1 bg-muted rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div
+                        className="bg-primary h-2 rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
                     </div>
-                    <span className="text-sm font-mono text-muted-foreground w-8 text-right">{count}</span>
+                    <span className="text-sm font-mono text-muted-foreground w-8 text-right">
+                      {count}
+                    </span>
                   </div>
                 );
               })}
@@ -91,11 +143,18 @@ const AdminDashboard = () => {
               <p className="text-muted-foreground text-sm">No urgent tasks</p>
             ) : (
               <div className="space-y-3">
-                {urgentTasks.map(task => (
-                  <div key={task.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                {urgentTasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  >
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm truncate">{task.title}</p>
-                      <p className="text-xs text-muted-foreground">{(task as any).projects?.name}</p>
+                      <p className="font-medium text-sm truncate">
+                        {task.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {(task as any).projects?.name}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
                       <StatusBadge status={task.status} />
@@ -115,13 +174,13 @@ const AdminDashboard = () => {
 
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="text-lg">Recent Projects</CardTitle>
+          <CardTitle className="text-lg">Recent Deals</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
+                <TableHead>Deal</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Stage</TableHead>
@@ -129,18 +188,37 @@ const AdminDashboard = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recentProjects.length === 0 ? (
+              {recentDeals.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">No projects yet</TableCell>
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-muted-foreground"
+                  >
+                    No deals yet
+                  </TableCell>
                 </TableRow>
               ) : (
-                recentProjects.map(project => (
-                  <TableRow key={project.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/projects/${project.id}`)}>
-                    <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>{(project as any).clients?.name || '—'}</TableCell>
-                    <TableCell className="capitalize">{project.project_type?.replace('_', ' ')}</TableCell>
-                    <TableCell><StageBadge stage={project.stage} /></TableCell>
-                    <TableCell>{project.capacity_kw ? `${project.capacity_kw} kW` : '—'}</TableCell>
+                recentDeals.map((project) => (
+                  <TableRow
+                    key={project.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => navigate(`/admin/projects/${project.id}`)}
+                  >
+                    <TableCell className="font-medium">
+                      {project.name}
+                    </TableCell>
+                    <TableCell>
+                      {(project as any).clients?.name || "—"}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      {project.project_type?.replace("_", " ")}
+                    </TableCell>
+                    <TableCell>
+                      <StageBadge stage={project.stage} />
+                    </TableCell>
+                    <TableCell>
+                      {project.capacity_kw ? `${project.capacity_kw} kW` : "—"}
+                    </TableCell>
                   </TableRow>
                 ))
               )}

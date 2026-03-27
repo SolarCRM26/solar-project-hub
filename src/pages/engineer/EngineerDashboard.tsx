@@ -134,7 +134,7 @@ const EngineerDashboard = () => {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatsCard
-          title="Design-Phase Projects"
+          title="Design-Phase Deals"
           value={designPhaseProjects}
           icon={FolderKanban}
           description="Design started / approved"
@@ -161,15 +161,13 @@ const EngineerDashboard = () => {
 
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle className="text-lg">
-            Assigned Project Design Status
-          </CardTitle>
+          <CardTitle className="text-lg">Assigned Deal Design Status</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
+                <TableHead>Deal</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Stage</TableHead>
                 <TableHead>Capacity</TableHead>
@@ -182,7 +180,7 @@ const EngineerDashboard = () => {
                     colSpan={4}
                     className="text-center text-muted-foreground py-8"
                   >
-                    No assigned engineering projects
+                    No assigned engineering deals
                   </TableCell>
                 </TableRow>
               ) : (
@@ -262,7 +260,7 @@ const EngineerDashboard = () => {
                         {task.title}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {(task as any).projects?.name || "No project linked"}
+                        {(task as any).projects?.name || "No deal linked"}
                       </p>
                     </div>
                     <div className="text-right space-y-1">

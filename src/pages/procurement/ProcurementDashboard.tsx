@@ -246,7 +246,7 @@ const ProcurementDashboard = () => {
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 p-3">
               <span className="text-sm text-muted-foreground">
-                Build-Window Projects
+                Build-Window Deals
               </span>
               <span className="font-semibold">{buildPhaseProjects.length}</span>
             </div>
@@ -280,7 +280,7 @@ const ProcurementDashboard = () => {
                         {task.title}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {(task as any).projects?.name || "No project linked"}
+                        {(task as any).projects?.name || "No deal linked"}
                       </p>
                     </div>
                     <div className="text-right space-y-1">
@@ -310,7 +310,7 @@ const ProcurementDashboard = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Document</TableHead>
-                    <TableHead>Project</TableHead>
+                    <TableHead>Deal</TableHead>
                     <TableHead>State</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -337,14 +337,12 @@ const ProcurementDashboard = () => {
 
       <Card className="border-border/60">
         <CardHeader>
-          <CardTitle className="text-lg">
-            Projects Entering Build Window
-          </CardTitle>
+          <CardTitle className="text-lg">Deals Entering Build Window</CardTitle>
         </CardHeader>
         <CardContent>
           {buildPhaseProjects.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No projects currently in design-approved/build-started stages.
+              No deals currently in design-approved/build-started stages.
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

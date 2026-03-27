@@ -290,7 +290,7 @@ const SalesDashboard = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Project</TableHead>
+                  <TableHead>Deal</TableHead>
                   <TableHead>Client</TableHead>
                   <TableHead>Stage</TableHead>
                 </TableRow>
@@ -302,7 +302,7 @@ const SalesDashboard = () => {
                       colSpan={3}
                       className="text-center text-muted-foreground py-8"
                     >
-                      No active sales pipeline projects
+                      No active sales pipeline deals
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -348,7 +348,7 @@ const SalesDashboard = () => {
                         {task.title}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {(task as any).projects?.name || "No project linked"}
+                        {(task as any).projects?.name || "No deal linked"}
                       </p>
                     </div>
                     <div className="text-right space-y-1">

@@ -226,13 +226,13 @@ const ClientDashboard = () => {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatsCard
-          title="Active Projects"
+          title="Active Deals"
           value={activeCount}
           icon={FolderKanban}
           description="In delivery lifecycle"
         />
         <StatsCard
-          title="Delivered Projects"
+          title="Delivered Deals"
           value={deliveredCount}
           icon={CheckCircle2}
           description="Closeout delivered"
@@ -279,7 +279,7 @@ const ClientDashboard = () => {
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/40 p-3">
               <span className="text-sm text-muted-foreground">
-                At-Risk Projects
+                At-Risk Deals
               </span>
               <span className="font-semibold text-destructive">
                 {scheduleRiskProjects}
@@ -293,7 +293,7 @@ const ClientDashboard = () => {
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Projects past target completion and not yet delivered
+              Deals past target completion and not yet delivered
             </div>
           </CardContent>
         </Card>
@@ -327,9 +327,9 @@ const ClientDashboard = () => {
         <Card className="border-border/60">
           <CardContent className="py-12 text-center">
             <FolderKanban className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">No Assigned Projects</h3>
+            <h3 className="text-lg font-semibold">No Assigned Deals</h3>
             <p className="text-sm text-muted-foreground">
-              Your project portfolio will appear here when assigned by your
+              Your deal portfolio will appear here when assigned by your
               delivery team.
             </p>
           </CardContent>
