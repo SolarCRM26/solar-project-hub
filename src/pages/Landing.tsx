@@ -129,11 +129,11 @@ const Landing = () => {
           </svg>
         </div>
 
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-8 pb-0 relative z-20">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 pt-8 pb-8 lg:pb-12 relative z-20">
           {/* Two-column hero layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 items-center">
             {/* Left Column - Text */}
-            <div className="relative z-30 pb-14">
+            <div className="relative z-30 pb-6 lg:pb-2">
               <h1 className="text-[clamp(3rem,6.5vw,6.2rem)] font-black leading-[0.88] tracking-tight text-[#2f3d35] uppercase">
                 <span className="flex items-center flex-wrap gap-x-3">
                   TAKE
@@ -188,23 +188,23 @@ const Landing = () => {
                   <span className="text-2xl font-black text-gray-900">
                     100k+
                   </span>
-                  <span className="text-white ml-1.5 text-sm font-medium">
+                  <span className="text-[#3e4f43] ml-1.5 text-sm font-medium">
                     Active homeowners and teams
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Right Column - House Image card flush at bottom-right */}
-            <div className="relative z-30 flex items-end justify-end pb-6 lg:pb-8">
-              <div className="w-full max-w-[580px] bg-[#4CAF50] rounded-tl-3xl rounded-tr-3xl rounded-br-none rounded-bl-none p-[5px] pb-0 shadow-xl shadow-[#4CAF50]/25">
-                <div className="relative rounded-tl-2xl rounded-tr-2xl overflow-hidden">
+            {/* Right Column - Hero Image */}
+            <div className="relative z-30 flex items-center justify-end lg:justify-center pb-2 lg:pb-0">
+              <div className="w-full max-w-[620px] bg-[#4CAF50] rounded-3xl p-[5px] shadow-xl shadow-[#4CAF50]/25">
+                <div className="relative rounded-[20px] overflow-hidden aspect-[16/9]">
                   <img
-                    src="/solar_house.png"
-                    alt="Modern house with solar panels"
-                    className="w-full h-auto min-h-[260px] lg:min-h-[320px] object-cover"
+                    src="/image.png"
+                    alt="Commercial rooftop solar installation"
+                    className="w-full h-full object-cover"
                     style={{
-                      filter: "saturate(0.55) contrast(1.1) brightness(0.93)",
+                      filter: "saturate(0.85) contrast(1.06) brightness(0.92)",
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>

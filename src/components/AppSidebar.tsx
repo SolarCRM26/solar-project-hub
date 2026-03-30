@@ -108,9 +108,14 @@ export function AppSidebar() {
           <Sun className="h-5 w-5 text-solar-foreground" />
         </div>
         {!collapsed && (
-          <span className="font-bold text-lg text-sidebar-accent-foreground">
-            SPD Nexus
-          </span>
+          <div>
+            <span className="block font-bold text-lg text-sidebar-accent-foreground leading-tight">
+              SPD Nexus
+            </span>
+            <span className="block text-[10px] text-sidebar-foreground/70 leading-tight mt-0.5">
+              Powered by Solar Power Depot
+            </span>
+          </div>
         )}
       </div>
 

@@ -226,14 +226,20 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-[#e2e3ea]">
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#1f2f3d] via-[#244154] to-[#2c3e2d] p-10 text-white">
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#1f2f3d] p-10 text-white">
+        <img
+          src="/image.png"
+          alt="Rooftop solar installation"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-[#0c1620]/80" />
         <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#4CAF50]/20 blur-3xl" />
         <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#66bb6a]/20 blur-3xl" />
-        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#4CAF50]/35 -skew-x-[28deg]" />
-        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#388E3C]/35 -skew-x-[28deg]" />
+        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#4CAF50]/26 -skew-x-[28deg]" />
+        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#388E3C]/24 -skew-x-[28deg]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(129,199,132,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(102,187,106,0.18),transparent_35%)]" />
 
-        <div className="relative z-10 flex items-center gap-3">
+        <div className="relative z-10 flex items-center gap-3 rounded-xl border border-white/20 bg-black/30 px-3 py-2 backdrop-blur-sm w-fit">
           <div className="p-2.5 rounded-xl bg-white/10 border border-white/20">
             <Sun className="h-6 w-6 text-[#81C784]" />
           </div>
@@ -241,11 +247,14 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">
               SPD NEXUS
             </p>
-            <h1 className="text-xl font-semibold">Solar Business Platform</h1>
+            <p className="text-[11px] text-white/75 mt-1">
+              Powered by Solar Power Depot
+            </p>
           </div>
         </div>
+        <div className="mt-10"></div>
 
-        <div className="relative z-10 max-w-lg space-y-6">
+        <div className="relative z-10 max-w-lg space-y-6 rounded-2xl border border-white/20 bg-black/30 p-6 backdrop-blur-sm shadow-2xl shadow-black/20">
           <h2 className="text-4xl font-bold leading-tight">
             Scale your solar business from lead to energized system.
           </h2>
@@ -258,7 +267,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             {lifecycleHighlights.map((item) => (
               <div
                 key={item}
-                className="flex items-center gap-3 rounded-lg border border-white/15 bg-white/5 px-4 py-3"
+                className="flex items-center gap-3 rounded-lg border border-white/25 bg-black/20 px-4 py-3"
               >
                 <CheckCircle2 className="h-4 w-4 text-success" />
                 <span className="text-sm text-white/90">{item}</span>
@@ -267,12 +276,17 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-white/60">
+        <div className="relative z-10 text-xs text-white/80 rounded-lg bg-black/30 border border-white/15 px-3 py-2 w-fit">
           Built for high-performance solar EPC and project operations teams.
         </div>
       </aside>
 
       <main className="relative flex items-center justify-center overflow-hidden bg-[#e2e3ea] p-6 sm:p-10 lg:p-12">
+        <img
+          src="/image.png"
+          alt="Solar panel field background"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.14]"
+        />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(76,175,80,0.1),transparent_28%),radial-gradient(circle_at_85%_90%,rgba(56,142,60,0.12),transparent_32%)]" />
         <div className="relative w-full max-w-lg space-y-4 animate-slide-in">
           <div className="lg:hidden flex items-center justify-center gap-2 text-center">
@@ -282,6 +296,9 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
                 SPD NEXUS
+              </p>
+              <p className="text-[11px] text-muted-foreground/90 mt-1">
+                Powered by Solar Power Depot
               </p>
               <p className="font-semibold">Solar Business Platform</p>
             </div>
