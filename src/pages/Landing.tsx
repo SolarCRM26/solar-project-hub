@@ -44,9 +44,7 @@ const Landing = () => {
             <div className="w-9 h-9 rounded-full bg-[#4CAF50] flex items-center justify-center shadow-md">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-bold text-gray-900">
-              Solar Tracker
-            </span>
+            <span className="text-lg font-bold text-gray-900">SPD NEXUS</span>
           </div>
 
           <nav className="hidden md:flex items-center gap-8">
