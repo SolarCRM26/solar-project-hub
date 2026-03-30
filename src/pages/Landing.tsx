@@ -198,7 +198,7 @@ const Landing = () => {
             {/* Right Column - Hero Image */}
             <div className="relative z-30 flex items-center justify-end lg:justify-center pb-2 lg:pb-0">
               <div className="w-full max-w-[620px] bg-[#4CAF50] rounded-3xl p-[5px] shadow-xl shadow-[#4CAF50]/25">
-                <div className="relative rounded-[20px] overflow-hidden aspect-[16/9]">
+                <div className="relative rounded-[20px] overflow-hidden h-[320px] lg:h-[430px]">
                   <img
                     src="/image.png"
                     alt="Commercial rooftop solar installation"
