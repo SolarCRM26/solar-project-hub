@@ -233,15 +233,15 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-[#0c1620]/80" />
-        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#4CAF50]/20 blur-3xl" />
+        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#D4A017]/20 blur-3xl" />
         <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#66bb6a]/20 blur-3xl" />
-        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#4CAF50]/26 -skew-x-[28deg]" />
-        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#388E3C]/24 -skew-x-[28deg]" />
+        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#D4A017]/26 -skew-x-[28deg]" />
+        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#B8860B]/24 -skew-x-[28deg]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(129,199,132,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(102,187,106,0.18),transparent_35%)]" />
 
         <div className="relative z-10 flex items-center gap-3 rounded-xl border border-white/20 bg-black/30 px-3 py-2 backdrop-blur-sm w-fit">
           <div className="p-2.5 rounded-xl bg-white/10 border border-white/20">
-            <Sun className="h-6 w-6 text-[#81C784]" />
+            <Sun className="h-6 w-6 text-[#F1C96B]" />
           </div>
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-white/70">
@@ -306,7 +306,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
           <Card className="w-full shadow-2xl border border-[#d2d6df] backdrop-blur-sm bg-[#eef1f6]/95 transition-all duration-300 rounded-3xl">
             <CardHeader className="space-y-2 pb-4">
-              <div className="flex items-center gap-2 text-[#2E7D32]">
+              <div className="flex items-center gap-2 text-[#8A6A00]">
                 <ShieldCheck className="h-5 w-5" />
                 <span className="text-sm font-medium">
                   Secure Workspace Access
@@ -335,7 +335,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Jane Solar"
-                      className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
+                      className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
                     />
                     {errors.fullName && (
                       <p className="text-sm text-destructive">
@@ -353,7 +353,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
-                    className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
+                    className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
@@ -369,7 +369,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
+                      className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
                     />
                     <Button
                       type="button"
@@ -409,7 +409,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                     >
                       <SelectTrigger
                         id="role"
-                        className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
+                        className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
                       >
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
@@ -437,7 +437,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#4CAF50]/50"
+                        className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
                       />
                       <Button
                         type="button"
@@ -467,7 +467,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-sm font-medium bg-[#4CAF50] text-white hover:bg-[#429c46]"
+                  className="w-full h-11 text-sm font-medium bg-[#D4A017] text-white hover:bg-[#C79412]"
                   disabled={loading}
                 >
                   {loading ? (
@@ -491,7 +491,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                     : "Don't have an account?"}{" "}
                   <Link
                     to={isSignup ? "/login" : "/signup"}
-                    className="text-[#2E7D32] font-semibold hover:text-[#256b29] transition-colors"
+                    className="text-[#8A6A00] font-semibold hover:text-[#725700] transition-colors"
                   >
                     {isSignup ? "Sign in" : "Create one"}
                   </Link>

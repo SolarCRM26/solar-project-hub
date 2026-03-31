@@ -44,11 +44,11 @@ const roleLabels: Record<AppRole, string> = {
 
 const roleColors: Record<AppRole, string> = {
   admin: "bg-red-500/20 text-red-700 dark:text-red-300",
-  sales: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+  sales: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
   engineering: "bg-blue-500/20 text-blue-700 dark:text-blue-300",
-  procurement: "bg-lime-500/20 text-lime-700 dark:text-lime-300",
+  procurement: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
   execution: "bg-indigo-500/20 text-indigo-700 dark:text-indigo-300",
-  client: "bg-green-500/20 text-green-700 dark:text-green-300",
+  client: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
 };
 
 const AdminUsers = () => {

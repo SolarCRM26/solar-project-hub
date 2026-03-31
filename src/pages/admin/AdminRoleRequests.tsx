@@ -112,7 +112,7 @@ const AdminRoleRequests = () => {
         return (
           <Badge
             variant="outline"
-            className="bg-green-50 text-green-700 border-green-300"
+            className="bg-amber-50 text-amber-700 border-amber-300"
           >
             <Clock className="h-3 w-3 mr-1" />
             Pending
@@ -122,7 +122,7 @@ const AdminRoleRequests = () => {
         return (
           <Badge
             variant="outline"
-            className="bg-green-50 text-green-700 border-green-300"
+            className="bg-amber-50 text-amber-700 border-amber-300"
           >
             <CheckCircle className="h-3 w-3 mr-1" />
             Approved
@@ -146,15 +146,15 @@ const AdminRoleRequests = () => {
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
       admin: "bg-blue-100 text-blue-800 border-blue-300",
-      sales: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      sales: "bg-amber-100 text-amber-800 border-amber-300",
       engineering: "bg-blue-100 text-blue-800 border-blue-300",
-      procurement: "bg-lime-100 text-lime-800 border-lime-300",
+      procurement: "bg-amber-100 text-amber-800 border-amber-300",
       execution: "bg-indigo-100 text-indigo-800 border-indigo-300",
-      client: "bg-green-100 text-green-800 border-green-300",
-      project_manager: "bg-emerald-100 text-emerald-800 border-emerald-300",
+      client: "bg-amber-100 text-amber-800 border-amber-300",
+      project_manager: "bg-amber-100 text-amber-800 border-amber-300",
       engineer: "bg-blue-100 text-blue-800 border-blue-300",
-      qa_manager: "bg-lime-100 text-lime-800 border-lime-300",
-      customer: "bg-green-100 text-green-800 border-green-300",
+      qa_manager: "bg-amber-100 text-amber-800 border-amber-300",
+      customer: "bg-amber-100 text-amber-800 border-amber-300",
     };
     return (
       <Badge variant="outline" className={colors[role] || ""}>
@@ -192,7 +192,7 @@ const AdminRoleRequests = () => {
           <CardTitle className="text-lg flex items-center justify-between">
             <span>Pending Requests ({pendingRequests.length})</span>
             {pendingRequests.length > 0 && (
-              <Badge variant="outline" className="bg-green-50 text-green-700">
+              <Badge variant="outline" className="bg-amber-50 text-amber-700">
                 {pendingRequests.length} awaiting review
               </Badge>
             )}
@@ -239,7 +239,7 @@ const AdminRoleRequests = () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-green-600 hover:text-green-700"
+                                className="text-amber-600 hover:text-amber-700"
                               >
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 Approve
@@ -263,7 +263,7 @@ const AdminRoleRequests = () => {
                                   onClick={() =>
                                     approveRequest.mutate(request.id)
                                   }
-                                  className="bg-green-600 hover:bg-green-700"
+                                  className="bg-amber-600 hover:bg-amber-700"
                                 >
                                   Approve
                                 </AlertDialogAction>

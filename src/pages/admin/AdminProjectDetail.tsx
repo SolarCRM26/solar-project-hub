@@ -1461,17 +1461,17 @@ const AdminProjectDetail = () => {
                             </div>
 
                             {item.references?.length ? (
-                              <div className="rounded-2xl border border-green-300/70 bg-green-50/60 p-5 space-y-4">
+                              <div className="rounded-2xl border border-amber-300/70 bg-amber-50/60 p-5 space-y-4">
                                 <div className="flex items-center justify-between gap-4">
                                   <div className="min-w-0">
-                                    <p className="text-xl font-medium text-green-900 truncate flex items-center gap-2">
-                                      <BookOpen className="h-5 w-5 text-green-700" />
+                                    <p className="text-xl font-medium text-amber-900 truncate flex items-center gap-2">
+                                      <BookOpen className="h-5 w-5 text-amber-700" />
                                       {item.references[0]}
                                     </p>
                                   </div>
                                   <Label
                                     htmlFor={`visual-file-${item.id}`}
-                                    className="inline-flex h-10 items-center justify-center rounded-xl border border-green-400 bg-background px-4 text-sm font-medium text-green-700 cursor-pointer hover:bg-green-100"
+                                    className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-400 bg-background px-4 text-sm font-medium text-amber-700 cursor-pointer hover:bg-amber-100"
                                   >
                                     <Upload className="h-4 w-4 mr-2" /> Upload
                                   </Label>
@@ -1496,7 +1496,7 @@ const AdminProjectDetail = () => {
                                 {item.references.slice(1).map((reference) => (
                                   <p
                                     key={reference}
-                                    className="text-sm text-green-800/90"
+                                    className="text-sm text-amber-800/90"
                                   >
                                     {reference}
                                   </p>

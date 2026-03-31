@@ -30,7 +30,7 @@ interface AuditEvent {
 }
 
 const actionColors: Record<string, string> = {
-  INSERT: 'bg-green-500/20 text-green-700 dark:text-green-300',
+  INSERT: 'bg-amber-500/20 text-amber-700 dark:text-amber-300',
   UPDATE: 'bg-blue-500/20 text-blue-700 dark:text-blue-300',
   DELETE: 'bg-red-500/20 text-red-700 dark:text-red-300',
 };
@@ -200,7 +200,7 @@ const AdminAuditLogs = () => {
                       </div>
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-1.5">New Value:</p>
-                        <div className="bg-green-50 dark:bg-green-950/20 rounded p-2.5 border border-green-200 dark:border-green-900">
+                        <div className="bg-amber-50 dark:bg-amber-950/20 rounded p-2.5 border border-amber-200 dark:border-amber-900">
                           <pre className="text-xs whitespace-pre-wrap break-all font-mono">
                             {formatValue(field.newVal)}
                           </pre>

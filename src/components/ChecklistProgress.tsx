@@ -31,12 +31,12 @@ export const ChecklistProgress = ({
           <span>{totalItems - completedItems} remaining</span>
         </div>
         <div className="flex items-center gap-1 rounded-full border bg-background px-2.5 py-1">
-          <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-400" />
+          <CheckCircle2 className="h-3 w-3 text-amber-600 dark:text-amber-400" />
           <span>{completedItems} completed</span>
         </div>
         {!allRequiredComplete && requiredItems > 0 && (
           <div className="flex items-center gap-1 rounded-full border bg-background px-2.5 py-1">
-            <AlertCircle className="h-3 w-3 text-lime-600 dark:text-lime-400" />
+            <AlertCircle className="h-3 w-3 text-amber-600 dark:text-amber-400" />
             <span>
               {requiredItems - completedRequiredItems} required pending
             </span>
@@ -62,9 +62,9 @@ export const ChecklistProgress = ({
             <div className="flex items-center gap-2">
               <span className="font-medium">Required Items</span>
               {allRequiredComplete ? (
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <CheckCircle2 className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-lime-600 dark:text-lime-400" />
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
               )}
             </div>
             <span className="text-muted-foreground">
@@ -75,7 +75,7 @@ export const ChecklistProgress = ({
             value={requiredProgress}
             className={cn(
               "h-2.5",
-              allRequiredComplete && "bg-green-200 dark:bg-green-900",
+              allRequiredComplete && "bg-amber-200 dark:bg-amber-900",
             )}
           />
         </div>

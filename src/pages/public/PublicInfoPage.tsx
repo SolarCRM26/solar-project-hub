@@ -337,7 +337,7 @@ const PublicInfoPage = () => {
     return (
       <main className="min-h-screen bg-[#edf0f2] px-6 py-16 lg:px-12">
         <div className="mx-auto max-w-3xl rounded-2xl border border-[#cfd6d0] bg-white p-8 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#2E7D32]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8A6A00]">
             Page Not Found
           </p>
           <h1 className="mt-3 text-3xl font-black text-[#1f2937]">
@@ -346,7 +346,7 @@ const PublicInfoPage = () => {
           <p className="mt-4 text-sm leading-relaxed text-gray-600">
             The requested information page does not exist or has moved.
           </p>
-          <Button asChild className="mt-8 bg-[#4CAF50] hover:bg-[#388E3C]">
+          <Button asChild className="mt-8 bg-[#D4A017] hover:bg-[#B8860B]">
             <Link to="/">Return to home</Link>
           </Button>
         </div>
@@ -359,14 +359,14 @@ const PublicInfoPage = () => {
       <div className="mx-auto max-w-5xl">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-[#2E7D32] hover:text-[#1B5E20]"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-[#8A6A00] hover:text-[#5F4800]"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to landing
         </Link>
 
         <section className="mt-8 rounded-3xl border border-[#d8ded9] bg-white p-8 shadow-sm lg:p-12">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#2E7D32]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8A6A00]">
             {content.eyebrow}
           </p>
           <h1 className="mt-4 text-4xl font-black leading-tight text-[#1f2937] lg:text-5xl">
@@ -388,7 +388,7 @@ const PublicInfoPage = () => {
                 <ul className="mt-4 space-y-3 text-sm leading-relaxed text-gray-700">
                   {section.points.map((point) => (
                     <li key={point} className="flex items-start gap-2">
-                      <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#4CAF50]" />
+                      <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[#D4A017]" />
                       <span>{point}</span>
                     </li>
                   ))}
@@ -398,7 +398,7 @@ const PublicInfoPage = () => {
           </div>
 
           <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Button asChild className="bg-[#4CAF50] hover:bg-[#388E3C]">
+            <Button asChild className="bg-[#D4A017] hover:bg-[#B8860B]">
               <Link to="/signup">Get Started</Link>
             </Button>
             <Button asChild variant="outline">

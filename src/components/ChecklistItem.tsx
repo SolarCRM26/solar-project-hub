@@ -35,7 +35,7 @@ export const ChecklistItem = ({
         "group rounded-xl border bg-background p-4 transition-all",
         "hover:border-slate-300/70 hover:bg-slate-50/60 dark:hover:bg-slate-900/30",
         item.checked
-          ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-800 dark:bg-emerald-950/25"
+          ? "border-amber-200 bg-amber-50/40 dark:border-amber-800 dark:bg-amber-950/25"
           : "border-slate-200/80",
       )}
     >
@@ -94,15 +94,15 @@ export const ChecklistItem = ({
         <div
           className={cn(
             "flex h-8 w-8 items-center justify-center rounded-full border",
-            item.checked && "border-emerald-200 bg-emerald-50",
-            !item.checked && item.required && "border-lime-200 bg-lime-50",
+            item.checked && "border-amber-200 bg-amber-50",
+            !item.checked && item.required && "border-amber-200 bg-amber-50",
             !item.checked && !item.required && "border-slate-200 bg-slate-50",
           )}
         >
           {item.checked ? (
-            <Check className="h-4 w-4 text-emerald-600" />
+            <Check className="h-4 w-4 text-amber-600" />
           ) : item.required ? (
-            <AlertCircle className="h-4 w-4 text-lime-600" />
+            <AlertCircle className="h-4 w-4 text-amber-600" />
           ) : (
             <X className="h-4 w-4 text-slate-500" />
           )}

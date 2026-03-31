@@ -87,9 +87,9 @@ export const NotificationBell = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case "success":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-amber-600" />;
       case "warning":
-        return <AlertTriangle className="h-4 w-4 text-lime-600" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-600" />;
       case "error":
         return <AlertCircle className="h-4 w-4 text-red-600" />;
       default:

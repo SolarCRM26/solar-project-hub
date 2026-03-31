@@ -169,7 +169,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
                   <Badge variant="secondary" className="ml-2 text-xs">Active</Badge>
                 )}
                 {hasCompletedChecklist && (
-                  <CheckCircle className="h-3 w-3 ml-2 text-green-600" />
+                  <CheckCircle className="h-3 w-3 ml-2 text-amber-600" />
                 )}
               </TabsTrigger>
               <TabsTrigger value="photos">

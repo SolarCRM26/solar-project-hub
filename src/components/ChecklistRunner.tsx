@@ -270,7 +270,7 @@ export const ChecklistRunner = ({
                     {(activeRun as any).checklist_templates?.name}
                   </CardTitle>
                   {isComplete ? (
-                    <Badge variant="default" className="bg-green-600">
+                    <Badge variant="default" className="bg-amber-600">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Completed
                     </Badge>
@@ -321,7 +321,7 @@ export const ChecklistRunner = ({
             <div className="flex items-center justify-between pt-4 border-t">
               <div className="text-sm text-muted-foreground">
                 {hasUnsavedChanges && (
-                  <span className="text-lime-600 dark:text-lime-400">
+                  <span className="text-amber-600 dark:text-amber-400">
                     • Unsaved changes
                   </span>
                 )}
@@ -358,10 +358,10 @@ export const ChecklistRunner = ({
 
           {/* Completion Status */}
           {!allRequiredComplete && items.length > 0 && !isComplete && (
-            <div className="bg-lime-50 dark:bg-lime-950/20 border border-lime-200 dark:border-lime-800 rounded-lg p-3 text-sm">
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
               <div className="flex items-start gap-2">
-                <Play className="h-4 w-4 text-lime-600 dark:text-lime-400 mt-0.5" />
-                <p className="text-lime-900 dark:text-lime-100">
+                <Play className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <p className="text-amber-900 dark:text-amber-100">
                   Complete all <strong>{requiredItems}</strong> required items
                   to finish this checklist.
                   {completedRequiredItems > 0 &&
@@ -372,10 +372,10 @@ export const ChecklistRunner = ({
           )}
 
           {isComplete && (
-            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3 text-sm">
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
               <div className="flex items-start gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5" />
-                <p className="text-green-900 dark:text-green-100">
+                <CheckCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <p className="text-amber-900 dark:text-amber-100">
                   Checklist completed on{" "}
                   {new Date(activeRun.completed_at).toLocaleString()}
                 </p>
