@@ -162,15 +162,11 @@ const Landing = () => {
       </div>
 
       <main>
-        <section className="relative overflow-hidden pt-28">
+        <section className="relative overflow-hidden pt-24">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(212,160,23,0.18),transparent_36%),radial-gradient(circle_at_95%_10%,rgba(184,134,11,0.16),transparent_38%)]" />
-          <div className="mx-auto grid w-full max-w-[1220px] gap-10 px-5 pb-14 pt-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-8">
+          <div className="mx-auto grid w-full max-w-[1220px] gap-10 px-5 pb-14 pt-2 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:px-8">
             <div className="relative z-10">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#ead6a8] bg-[#fff4dc] px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-[#8a6a00]">
-                <Sun className="h-4 w-4" />
-                Solar Performance Command
-              </div>
-              <h1 className="mt-5 text-[clamp(2.4rem,6.2vw,5.4rem)] font-extrabold leading-[0.93] tracking-tight text-[#221b11]">
+              <h1 className="mt-1 text-[clamp(2.4rem,6.2vw,5.4rem)] font-extrabold leading-[0.93] tracking-tight text-[#221b11]">
                 Control Your Solar
                 <br />
                 With Total Clarity.
