@@ -4,7 +4,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Sun,
   ShieldCheck,
   ArrowRight,
   CheckCircle2,
@@ -239,18 +238,15 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
         <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#B8860B]/24 -skew-x-[28deg]" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(129,199,132,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(102,187,106,0.18),transparent_35%)]" />
 
-        <div className="relative z-10 flex items-center gap-3 rounded-xl border border-white/20 bg-black/30 px-3 py-2 backdrop-blur-sm w-fit">
-          <div className="p-2.5 rounded-xl bg-white/10 border border-white/20">
-            <Sun className="h-6 w-6 text-[#F1C96B]" />
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/70">
-              SPD NEXUS
-            </p>
-            <p className="text-[11px] text-white/75 mt-1">
-              Powered by Solar Power Depot
-            </p>
-          </div>
+        <div className="relative z-10 w-fit">
+          <img
+            src="/transparent%20logo.png"
+            alt="SPD Nexus"
+            className="h-28 w-auto object-contain"
+          />
+          <p className="text-[11px] text-white/75 mt-2">
+            Solar Project Intelligence Platform - Designed by Solar Power Depot
+          </p>
         </div>
         <div className="mt-10"></div>
 
@@ -289,16 +285,16 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
         />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(76,175,80,0.1),transparent_28%),radial-gradient(circle_at_85%_90%,rgba(56,142,60,0.12),transparent_32%)]" />
         <div className="relative w-full max-w-lg space-y-4 animate-slide-in">
-          <div className="lg:hidden flex items-center justify-center gap-2 text-center">
-            <div className="p-2 rounded-lg bg-gradient-solar">
-              <Sun className="h-4 w-4 text-solar-foreground" />
-            </div>
+          <div className="lg:hidden flex flex-col items-center justify-center gap-2 text-center">
+            <img
+              src="/transparent%20logo.png"
+              alt="SPD Nexus"
+              className="h-20 w-auto object-contain"
+            />
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                SPD NEXUS
-              </p>
               <p className="text-[11px] text-muted-foreground/90 mt-1">
-                Powered by Solar Power Depot
+                Solar Project Intelligence Platform - Designed by Solar Power
+                Depot
               </p>
               <p className="font-semibold">Solar Business Platform</p>
             </div>

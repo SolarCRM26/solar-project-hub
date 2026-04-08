@@ -13,7 +13,6 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  Sun,
   LayoutDashboard,
   FolderKanban,
   ListTodo,
@@ -40,8 +39,6 @@ const adminItems = [
   { title: "Deals", url: "/admin/projects", icon: FolderKanban },
   { title: "Work Orders", url: "/admin/tasks", icon: ListTodo },
   { title: "Form Checklist", url: "/admin/checklists", icon: ListChecks },
-  { title: "HR", url: "/admin/hr", icon: Users },
-  { title: "PV Monitor", url: "/admin/pv-monitor", icon: BarChart3 },
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Audit Logs", url: "/admin/audit-logs", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
@@ -102,21 +99,17 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <div
-        className={`flex items-center gap-2 py-4 border-b border-sidebar-border ${collapsed ? "justify-center px-2" : "px-4"}`}
+        className={`border-b border-sidebar-border ${collapsed ? "px-2 py-3" : "px-4 py-3"}`}
       >
-        <div className="p-1.5 rounded-lg bg-gradient-solar flex-shrink-0">
-          <Sun className="h-5 w-5 text-solar-foreground" />
+        <div
+          className={`flex ${collapsed ? "justify-center" : "justify-start"}`}
+        >
+          <img
+            src="/transparent%20logo.png"
+            alt="SPD Nexus"
+            className={`${collapsed ? "h-10 w-10" : "h-20 w-auto max-w-[250px]"} object-contain`}
+          />
         </div>
-        {!collapsed && (
-          <div>
-            <span className="block font-bold text-lg text-sidebar-accent-foreground leading-tight">
-              SPD Nexus
-            </span>
-            <span className="block text-[10px] text-sidebar-foreground/70 leading-tight mt-0.5">
-              Powered by Solar Power Depot
-            </span>
-          </div>
-        )}
       </div>
 
       <SidebarContent>

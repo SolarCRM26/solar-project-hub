@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,7 +124,7 @@ type DealFlowItem = {
   stageCardKey: string;
 };
 
-const installationChecklistSections: ChecklistSectionDefinition[] = [
+const defaultInstallationChecklistSections: ChecklistSectionDefinition[] = [
   {
     id: "material-management",
     title: "Material Management",
@@ -288,10 +288,6 @@ const installationChecklistSections: ChecklistSectionDefinition[] = [
   },
 ];
 
-const allInstallationChecklistItems = installationChecklistSections.flatMap(
-  (section) => section.items,
-);
-
 const stageFileDefinitions = [
   { key: "site_survey", name: "Site Survey" },
   { key: "design", name: "Design" },
@@ -299,8 +295,6 @@ const stageFileDefinitions = [
   { key: "contract", name: "Contract" },
   { key: "procurement", name: "Procurement" },
   { key: "installation", name: "Installation" },
-  { key: "hr", name: "HR" },
-  { key: "pv_monitor", name: "PV Monitor" },
   { key: "commissioning", name: "Commissioning" },
 ];
 
@@ -342,18 +336,6 @@ const dealStageFlow: readonly DealFlowItem[] = [
     stageCardKey: "installation",
   },
   {
-    key: "hr",
-    label: "HR",
-    projectStage: "qa_passed",
-    stageCardKey: "hr",
-  },
-  {
-    key: "pv_monitor",
-    label: "PV Monitor",
-    projectStage: "commissioned",
-    stageCardKey: "pv_monitor",
-  },
-  {
     key: "closeout_delivered",
     label: "Closeout Delivered",
     projectStage: "closeout_delivered",
@@ -368,8 +350,8 @@ const projectStageToFlowKey: Record<string, DealFlowItem["key"]> = {
   proposal_approved: "proposal_submitted",
   contract_signed: "contract_signed",
   build_started: "installation",
-  qa_passed: "hr",
-  commissioned: "pv_monitor",
+  qa_passed: "installation",
+  commissioned: "closeout_delivered",
   closeout_delivered: "closeout_delivered",
 };
 
@@ -409,6 +391,11 @@ const AdminProjectDetail = () => {
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
   const [activeInstallationSection, setActiveInstallationSection] =
     useState<string>("");
+  const [installationSections, setInstallationSections] = useState<
+    ChecklistSectionDefinition[]
+  >(defaultInstallationChecklistSections);
+  const [newInstallationStageTitle, setNewInstallationStageTitle] =
+    useState("");
   const [selectedFlowKey, setSelectedFlowKey] =
     useState<DealFlowItem["key"]>("site_survey");
   const [stageFilesState, setStageFilesState] = useState<
@@ -420,6 +407,11 @@ const AdminProjectDetail = () => {
   const stageCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const installationSectionRefs = useRef<Record<string, HTMLDivElement | null>>(
     {},
+  );
+
+  const allInstallationChecklistItems = useMemo(
+    () => installationSections.flatMap((section) => section.items),
+    [installationSections],
   );
 
   const scrollInstallationSectionToTop = (sectionId: string) => {
@@ -605,6 +597,20 @@ const AdminProjectDetail = () => {
       (stageFilesData || []).map((row: any) => [row.stage_key, row]),
     );
 
+    const configRow = fromDb.get("installation_config");
+    if (configRow?.notes) {
+      try {
+        const parsed = JSON.parse(configRow.notes);
+        if (Array.isArray(parsed?.sections)) {
+          setInstallationSections(
+            parsed.sections as ChecklistSectionDefinition[],
+          );
+        }
+      } catch {
+        setInstallationSections(defaultInstallationChecklistSections);
+      }
+    }
+
     const merged = Object.fromEntries(
       stageFileDefinitions.map((stage) => {
         const existing = fromDb.get(stage.key);
@@ -623,6 +629,19 @@ const AdminProjectDetail = () => {
         ];
       }),
     );
+
+    if (configRow) {
+      merged.installation_config = {
+        id: configRow.id,
+        project_id: id,
+        stage_key: "installation_config",
+        stage_name: "Installation Config",
+        notes: configRow.notes || "",
+        entered_at: configRow.entered_at || null,
+        completed_at: configRow.completed_at || null,
+        documents: (configRow.documents as StageFileDocument[]) || [],
+      } satisfies StageFileRow;
+    }
 
     setStageFilesState(merged);
   }, [id, stageFilesData]);
@@ -983,6 +1002,11 @@ const AdminProjectDetail = () => {
   const selectedCustomer = customers.find(
     (c) => c.client_id === project.client_id,
   );
+  const selectedStageCardKey =
+    flowKeyToStageCardKey[selectedFlowKey] || "site_survey";
+  const selectedStageDefinition =
+    stageFileDefinitions.find((stage) => stage.key === selectedStageCardKey) ||
+    stageFileDefinitions[0];
   const customerLabel =
     selectedCustomer?.full_name || selectedCustomer?.email || "Customer WO";
 
@@ -1089,6 +1113,62 @@ const AdminProjectDetail = () => {
       entered_at: row.entered_at || nowIso,
       completed_at: row.completed_at || nowIso,
     });
+  };
+
+  const persistInstallationConfig = (
+    sections: ChecklistSectionDefinition[],
+  ) => {
+    if (!id) return;
+
+    saveStageFileRowMutation.mutate({
+      project_id: id,
+      stage_key: "installation_config",
+      stage_name: "Installation Config",
+      notes: JSON.stringify({ sections }),
+      entered_at: null,
+      completed_at: null,
+      documents: [],
+    });
+  };
+
+  const addInstallationStage = () => {
+    const title = newInstallationStageTitle.trim();
+    if (!title) return;
+
+    const newItem: ChecklistItemDefinition = {
+      id: `custom-${Date.now()}`,
+      title,
+    };
+
+    const nextSections = installationSections.map((section) =>
+      section.id === "installation"
+        ? { ...section, items: [...section.items, newItem] }
+        : section,
+    );
+
+    setInstallationSections(nextSections);
+    setNewInstallationStageTitle("");
+    persistInstallationConfig(nextSections);
+  };
+
+  const removeInstallationStage = (itemId: string) => {
+    const nextSections = installationSections.map((section) =>
+      section.id === "installation"
+        ? {
+            ...section,
+            items: section.items.filter((item) => item.id !== itemId),
+          }
+        : section,
+    );
+
+    setInstallationSections(nextSections);
+    setChecklistState((prev) => {
+      const nextState = { ...prev };
+      delete nextState[itemId];
+      saveChecklistStateMutation.mutate(nextState);
+      return nextState;
+    });
+    persistInstallationConfig(nextSections);
   };
 
   const handleStageFileUpload = async (
@@ -1208,7 +1288,7 @@ const AdminProjectDetail = () => {
                   }
                   onClick={() => {
                     setSelectedFlowKey(stage.key);
-                    setActiveTab("stage-files");
+                    setActiveTab("stage-detail");
                     if (stage.projectStage) {
                       setForm((f) => ({
                         ...f,
@@ -1225,14 +1305,136 @@ const AdminProjectDetail = () => {
         </CardContent>
       </Card>
 
+      <Card className="border-border/50 bg-card/70">
+        <CardContent className="p-4 md:p-5">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start rounded-xl h-11 text-sm font-semibold"
+            onClick={() => setActiveTab("stage-files")}
+          >
+            {project.name} Dashboard
+          </Button>
+        </CardContent>
+      </Card>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="stage-files">Stages & Files</TabsTrigger>
+          <TabsTrigger value="stage-detail">Stage Page</TabsTrigger>
+          <TabsTrigger value="stage-files">Project Dashboard</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="team">Team ({team.length})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks (0)</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="stage-detail" className="space-y-4">
+          {(() => {
+            const stage = selectedStageDefinition;
+            const row = stageFilesState[stage.key] || {
+              project_id: id!,
+              stage_key: stage.key,
+              stage_name: stage.name,
+              notes: "",
+              entered_at: null,
+              completed_at: null,
+              documents: [],
+            };
+
+            return (
+              <Card className="border-primary/40">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-2xl">{stage.name}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Entered: {formatDateTime(row.entered_at)} - Completed:{" "}
+                    {formatDateTime(row.completed_at)}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium">
+                        Documents ({row.documents.length})
+                      </p>
+                      <Label
+                        htmlFor={`stage-detail-file-${stage.key}`}
+                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                      >
+                        {uploadingStageKey === stage.key ? (
+                          <>
+                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                            Uploading
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-3.5 w-3.5 mr-1.5" />
+                            Upload
+                          </>
+                        )}
+                      </Label>
+                      <Input
+                        id={`stage-detail-file-${stage.key}`}
+                        type="file"
+                        accept="image/*,.pdf"
+                        className="hidden"
+                        disabled={uploadingStageKey === stage.key}
+                        onChange={(e) => {
+                          const selectedFile = e.target.files?.[0] || null;
+                          handleStageFileUpload(stage.key, selectedFile);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                    </div>
+
+                    {row.documents.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">
+                        No files uploaded
+                      </p>
+                    ) : (
+                      <div className="space-y-1">
+                        {row.documents.map((doc) => (
+                          <button
+                            key={doc.file_path}
+                            type="button"
+                            onClick={() => openStageFile(doc.file_path)}
+                            className="w-full text-left text-xs border rounded-md px-2.5 py-2 hover:bg-accent/50 transition-colors flex items-center justify-between"
+                          >
+                            <span className="truncate flex items-center gap-1.5">
+                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                              {doc.file_name}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {(doc.file_size / 1024).toFixed(0)} KB
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm">Notes</Label>
+                    <Textarea
+                      value={row.notes}
+                      placeholder={`Notes for ${stage.name} stage...`}
+                      onChange={(e) =>
+                        setStageFilesState((prev) => ({
+                          ...prev,
+                          [stage.key]: {
+                            ...row,
+                            notes: e.target.value,
+                          },
+                        }))
+                      }
+                      onBlur={() => handleStageNotesBlur(stage.key)}
+                      rows={5}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+        </TabsContent>
 
         <TabsContent value="stage-files" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1247,10 +1449,7 @@ const AdminProjectDetail = () => {
                 documents: [],
               };
 
-              const isCurrent =
-                flowKeyToStageCardKey[selectedFlowKey] === stage.key ||
-                (!flowKeyToStageCardKey[selectedFlowKey] &&
-                  stage.key === "site_survey");
+              const isCurrent = selectedStageCardKey === stage.key;
 
               return (
                 <Card
@@ -1369,6 +1568,23 @@ const AdminProjectDetail = () => {
                   Track all activities from material delivery to project
                   closeout. Each activity supports file uploads (images/PDFs).
                 </p>
+                <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                  <Input
+                    value={newInstallationStageTitle}
+                    onChange={(e) =>
+                      setNewInstallationStageTitle(e.target.value)
+                    }
+                    placeholder="Add a custom installation stage"
+                    className="sm:max-w-sm"
+                  />
+                  <Button
+                    type="button"
+                    onClick={addInstallationStage}
+                    disabled={!newInstallationStageTitle.trim()}
+                  >
+                    Add Stage
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -1399,7 +1615,7 @@ const AdminProjectDetail = () => {
             }}
             className="space-y-3"
           >
-            {installationChecklistSections.map((section) => {
+            {installationSections.map((section) => {
               const sectionCompleted = section.items.filter(
                 (item) => checklistState[item.id]?.completed,
               ).length;
@@ -1455,16 +1671,29 @@ const AdminProjectDetail = () => {
                                   <Circle className="h-4 w-4" />
                                 )}
                               </Button>
-                              <h4 className="text-2xl font-medium leading-tight text-primary">
+                              <h4 className="text-xl font-semibold leading-tight text-primary">
                                 {item.title}
                               </h4>
+                              {section.id === "installation" && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="ml-auto h-8 w-8 text-destructive"
+                                  onClick={() =>
+                                    removeInstallationStage(item.id)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
 
                             {item.references?.length ? (
                               <div className="rounded-2xl border border-amber-300/70 bg-amber-50/60 p-5 space-y-4">
                                 <div className="flex items-center justify-between gap-4">
                                   <div className="min-w-0">
-                                    <p className="text-xl font-medium text-amber-900 truncate flex items-center gap-2">
+                                    <p className="text-lg font-medium text-amber-900 truncate flex items-center gap-2">
                                       <BookOpen className="h-5 w-5 text-amber-700" />
                                       {item.references[0]}
                                     </p>
@@ -1502,7 +1731,7 @@ const AdminProjectDetail = () => {
                                   </p>
                                 ))}
 
-                                <p className="text-xl italic text-muted-foreground">
+                                <p className="text-sm italic text-muted-foreground">
                                   No files uploaded
                                 </p>
                               </div>
@@ -1510,7 +1739,7 @@ const AdminProjectDetail = () => {
 
                             {item.inspectionLabel ? (
                               <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 flex items-center justify-between gap-4">
-                                <p className="text-2xl font-medium text-blue-800">
+                                <p className="text-lg font-semibold text-blue-800">
                                   {item.inspectionLabel}
                                 </p>
                                 <div className="flex items-center gap-3">
@@ -1563,11 +1792,13 @@ const AdminProjectDetail = () => {
                             ) : null}
 
                             <div className="space-y-2">
-                              <Label className="text-xl">Notes</Label>
+                              <Label className="text-sm font-semibold">
+                                Notes
+                              </Label>
                               <Textarea
                                 placeholder="Add notes..."
                                 value={itemState.notes}
-                                className="min-h-24 text-base"
+                                className="min-h-24 text-sm"
                                 onChange={(e) =>
                                   updateChecklistItemState(item.id, {
                                     notes: e.target.value,
@@ -1584,7 +1815,9 @@ const AdminProjectDetail = () => {
 
                             <div className="space-y-2">
                               <div className="flex items-center justify-between gap-2">
-                                <Label className="text-xl">Work Files</Label>
+                                <Label className="text-sm font-semibold">
+                                  Work Files
+                                </Label>
                                 <Label
                                   htmlFor={`work-file-${item.id}`}
                                   className="inline-flex h-10 items-center justify-center rounded-xl border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm cursor-pointer hover:bg-accent hover:text-accent-foreground"
@@ -1618,7 +1851,7 @@ const AdminProjectDetail = () => {
                                 />
                               </div>
                               {itemState.files.length === 0 ? (
-                                <p className="text-xl italic text-muted-foreground">
+                                <p className="text-sm italic text-muted-foreground">
                                   No files uploaded
                                 </p>
                               ) : (

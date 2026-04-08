@@ -1,15 +1,22 @@
-import { useState, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Camera, Upload, X, Image as ImageIcon, Loader2, Trash2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Camera,
+  Upload,
+  X,
+  Image as ImageIcon,
+  Loader2,
+  Trash2,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,26 +45,33 @@ interface TaskPhoto {
   };
 }
 
-export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps) => {
+interface SelectedPhoto {
+  file: File;
+  previewUrl: string;
+}
+
+export const TaskPhotoUploader = ({
+  taskId,
+  projectId,
+}: TaskPhotoUploaderProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [caption, setCaption] = useState('');
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<SelectedPhoto[]>([]);
+  const [caption, setCaption] = useState("");
 
   // Fetch existing photos
   const { data: photos = [], isLoading } = useQuery({
-    queryKey: ['task-photos', taskId],
+    queryKey: ["task-photos", taskId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('task_photos')
-        .select('*, profiles!task_photos_uploaded_by_fkey(full_name)')
-        .eq('task_id', taskId)
-        .order('uploaded_at', { ascending: false });
+        .from("task_photos")
+        .select("*, profiles!task_photos_uploaded_by_fkey(full_name)")
+        .eq("task_id", taskId)
+        .order("uploaded_at", { ascending: false });
       if (error) throw error;
       return data as TaskPhoto[];
     },
@@ -65,55 +79,69 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast({ title: 'Invalid file', description: 'Please select an image file', variant: 'destructive' });
+      const incomingFiles = Array.from(e.target.files);
+      const invalidFile = incomingFiles.find(
+        (file) => !file.type.startsWith("image/"),
+      );
+
+      if (invalidFile) {
+        toast({
+          title: "Invalid file",
+          description: "Please select image files only",
+          variant: "destructive",
+        });
         return;
       }
-      
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({ title: 'File too large', description: 'Maximum file size is 10MB', variant: 'destructive' });
-        return;
-      }
-      
-      setSelectedFile(file);
-      
-      // Create preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+
+      const mappedFiles = incomingFiles.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      }));
+
+      setSelectedFiles((prevFiles) => [...prevFiles, ...mappedFiles]);
     }
+  };
+
+  const removeSelectedFile = (indexToRemove: number) => {
+    setSelectedFiles((prevFiles) => {
+      const fileToRemove = prevFiles[indexToRemove];
+      if (fileToRemove) {
+        URL.revokeObjectURL(fileToRemove.previewUrl);
+      }
+      return prevFiles.filter((_, index) => index !== indexToRemove);
+    });
+  };
+
+  const clearSelectedFiles = () => {
+    setSelectedFiles((prevFiles) => {
+      prevFiles.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+      return [];
+    });
   };
 
   const uploadPhoto = useMutation({
     mutationFn: async () => {
-      if (!selectedFile) throw new Error('No file selected');
-      
-      setProgress(10);
-      
-      // Upload to storage
-      const fileExt = selectedFile.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `task-photos/${projectId}/${taskId}/${Date.now()}.${fileExt}`;
-      
-      setProgress(30);
-      
-      const { error: uploadError } = await supabase.storage
-        .from('project-documents')
-        .upload(fileName, selectedFile);
+      if (selectedFiles.length === 0) throw new Error("No files selected");
 
-      if (uploadError) throw uploadError;
-      
-      setProgress(60);
-      
-      // Create database record
-      const { error: dbError } = await supabase
-        .from('task_photos')
-        .insert({
+      const records = [];
+
+      for (let index = 0; index < selectedFiles.length; index += 1) {
+        const current = selectedFiles[index];
+        const fileExt =
+          current.file.name.split(".").pop()?.toLowerCase() || "jpg";
+        const fileName = `task-photos/${projectId}/${taskId}/${Date.now()}-${index + 1}.${fileExt}`;
+
+        setProgress(
+          Math.round(((index + 1) / (selectedFiles.length * 2)) * 100),
+        );
+
+        const { error: uploadError } = await supabase.storage
+          .from("project-documents")
+          .upload(fileName, current.file);
+
+        if (uploadError) throw uploadError;
+
+        records.push({
           task_id: taskId,
           project_id: projectId,
           file_path: fileName,
@@ -121,23 +149,43 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
           uploaded_by: user!.id,
         });
 
+        setProgress(
+          Math.round(
+            ((selectedFiles.length + index + 1) / (selectedFiles.length * 2)) *
+              100,
+          ),
+        );
+      }
+
+      const { error: dbError } = await supabase
+        .from("task_photos")
+        .insert(records);
+
       if (dbError) throw dbError;
-      
+
       setProgress(100);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task-photos', taskId] });
-      toast({ title: 'Photo uploaded successfully' });
-      setSelectedFile(null);
-      setCaption('');
-      setPreviewUrl(null);
+      queryClient.invalidateQueries({ queryKey: ["task-photos", taskId] });
+      toast({
+        title:
+          selectedFiles.length > 1
+            ? "Photos uploaded successfully"
+            : "Photo uploaded successfully",
+      });
+      clearSelectedFiles();
+      setCaption("");
       setProgress(0);
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     },
     onError: (error: Error) => {
-      toast({ title: 'Upload failed', description: error.message, variant: 'destructive' });
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
       setProgress(0);
     },
     onSettled: () => {
@@ -147,46 +195,50 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
 
   const deletePhoto = useMutation({
     mutationFn: async (photoId: string) => {
-      const photo = photos.find(p => p.id === photoId);
-      if (!photo) throw new Error('Photo not found');
-      
+      const photo = photos.find((p) => p.id === photoId);
+      if (!photo) throw new Error("Photo not found");
+
       // Delete from storage
       const { error: storageError } = await supabase.storage
-        .from('project-documents')
+        .from("project-documents")
         .remove([photo.file_path]);
 
       if (storageError) throw storageError;
-      
+
       // Delete from database
       const { error: dbError } = await supabase
-        .from('task_photos')
+        .from("task_photos")
         .delete()
-        .eq('id', photoId);
+        .eq("id", photoId);
 
       if (dbError) throw dbError;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task-photos', taskId] });
-      toast({ title: 'Photo deleted' });
+      queryClient.invalidateQueries({ queryKey: ["task-photos", taskId] });
+      toast({ title: "Photo deleted" });
     },
     onError: (error: Error) => {
-      toast({ title: 'Delete failed', description: error.message, variant: 'destructive' });
+      toast({
+        title: "Delete failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const handleUpload = async () => {
-    if (!selectedFile) {
-      toast({ title: 'No file selected', variant: 'destructive' });
+    if (selectedFiles.length === 0) {
+      toast({ title: "No file selected", variant: "destructive" });
       return;
     }
-    
+
     setUploading(true);
     uploadPhoto.mutate();
   };
 
   const getPhotoUrl = (filePath: string) => {
     const { data } = supabase.storage
-      .from('project-documents')
+      .from("project-documents")
       .getPublicUrl(filePath);
     return data.publicUrl;
   };
@@ -203,20 +255,21 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
                 className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer hover:bg-accent/50 transition-colors"
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="h-32 w-auto object-contain rounded mb-2"
-                    />
-                  ) : (
+                  {selectedFiles.length === 0 ? (
                     <>
                       <Camera className="h-12 w-12 text-muted-foreground mb-3" />
                       <p className="mb-2 text-sm text-muted-foreground">
-                        <span className="font-semibold">Click to upload</span> or drag and drop
+                        <span className="font-semibold">Click to upload</span>{" "}
+                        or drag and drop
                       </p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG, JPEG (MAX. 10MB)</p>
+                      <p className="text-xs text-muted-foreground">
+                        PNG, JPG, JPEG
+                      </p>
                     </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {selectedFiles.length} file(s) selected
+                    </p>
                   )}
                 </div>
                 <Input
@@ -224,6 +277,7 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
                   ref={fileInputRef}
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={handleFileSelect}
                   className="hidden"
                   disabled={uploading}
@@ -231,8 +285,33 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
               </label>
             </div>
 
-            {selectedFile && (
+            {selectedFiles.length > 0 && (
               <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {selectedFiles.map((item, index) => (
+                    <div
+                      key={`${item.file.name}-${index}`}
+                      className="relative rounded-lg overflow-hidden border"
+                    >
+                      <img
+                        src={item.previewUrl}
+                        alt={item.file.name}
+                        className="h-24 w-full object-cover"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="destructive"
+                        className="absolute top-1 right-1 h-6 w-6"
+                        onClick={() => removeSelectedFile(index)}
+                        disabled={uploading}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="caption">Caption (Optional)</Label>
                   <Textarea
@@ -261,18 +340,17 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
                     ) : (
                       <>
                         <Upload className="h-4 w-4 mr-2" />
-                        Upload Photo
+                        Upload {selectedFiles.length > 1 ? "Photos" : "Photo"}
                       </>
                     )}
                   </Button>
                   <Button
                     variant="outline"
                     onClick={() => {
-                      setSelectedFile(null);
-                      setCaption('');
-                      setPreviewUrl(null);
+                      clearSelectedFiles();
+                      setCaption("");
                       if (fileInputRef.current) {
-                        fileInputRef.current.value = '';
+                        fileInputRef.current.value = "";
                       }
                     }}
                     disabled={uploading}
@@ -292,7 +370,7 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
           <ImageIcon className="h-5 w-5" />
           Uploaded Photos ({photos.length})
         </h3>
-        
+
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -303,7 +381,9 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
               <div className="flex flex-col items-center justify-center text-center text-muted-foreground">
                 <Camera className="h-12 w-12 mb-3 opacity-50" />
                 <p>No photos uploaded yet</p>
-                <p className="text-sm mt-1">Upload photos to document your work</p>
+                <p className="text-sm mt-1">
+                  Upload photos to document your work
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -314,7 +394,7 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
                 <div className="relative aspect-video">
                   <img
                     src={getPhotoUrl(photo.file_path)}
-                    alt={photo.caption || 'Task photo'}
+                    alt={photo.caption || "Task photo"}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -332,7 +412,8 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Photo?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. The photo will be permanently deleted.
+                            This action cannot be undone. The photo will be
+                            permanently deleted.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -356,7 +437,7 @@ export const TaskPhotoUploader = ({ taskId, projectId }: TaskPhotoUploaderProps)
                     {new Date(photo.uploaded_at).toLocaleString()}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    By {photo.profiles?.full_name || 'Unknown'}
+                    By {photo.profiles?.full_name || "Unknown"}
                   </p>
                 </CardContent>
               </Card>
