@@ -60,6 +60,16 @@ const dealCardStageLabels: Record<string, string> = {
   closeout_delivered: "Closeout Delivered",
 };
 
+const dealWorkflowStages = [
+  { value: "lead_created", label: "Site Survey" },
+  { value: "design_started", label: "Design Started" },
+  { value: "proposal_approved", label: "Proposal Submitted" },
+  { value: "contract_signed", label: "Contract Signed" },
+  { value: "design_approved", label: "Procurement" },
+  { value: "build_started", label: "Installation" },
+  { value: "closeout_delivered", label: "Closeout Delivered" },
+] as const;
+
 const AdminProjects = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -612,7 +622,7 @@ const AdminProjects = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Stages</SelectItem>
-              {stages.map((s) => (
+              {dealWorkflowStages.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
                   {s.label}
                 </SelectItem>
@@ -634,7 +644,7 @@ const AdminProjects = () => {
         >
           All ({projects.length})
         </button>
-        {stages.slice(0, 5).map((s) => (
+        {dealWorkflowStages.map((s) => (
           <button
             key={s.value}
             type="button"
