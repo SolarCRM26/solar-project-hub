@@ -61,27 +61,6 @@ const features = [
   },
 ];
 
-const testimonials = [
-  {
-    name: "Sarah Mitchell",
-    role: "Homeowner, California",
-    quote:
-      "Solar Tracker reduced our monthly electricity spend fast. We finally have clear control over usage.",
-  },
-  {
-    name: "James Rodriguez",
-    role: "Facility Manager, Texas",
-    quote:
-      "Managing multiple sites used to be chaotic. Now every decision is based on one reliable dashboard.",
-  },
-  {
-    name: "Priya Sharma",
-    role: "Business Owner, Dubai",
-    quote:
-      "Maintenance alerts helped us avoid downtime. The ROI visibility is exactly what we needed.",
-  },
-];
-
 const trustMetrics = [
   {
     value: "31%",
@@ -488,27 +467,6 @@ const Landing = () => {
                   <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                     {item.desc}
                   </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="pb-18 lg:pb-24">
-          <div className="mx-auto w-full max-w-[1220px] px-5 lg:px-8">
-            <div className="grid gap-4 md:grid-cols-3 stagger-animate">
-              {testimonials.map((item) => (
-                <article
-                  key={item.name}
-                  className="surface-card rounded-3xl p-6"
-                >
-                  <p className="text-sm leading-relaxed text-foreground/75">
-                    "{item.quote}"
-                  </p>
-                  <div className="mt-5 border-t border-border/80 pt-4">
-                    <p className="font-bold text-foreground">{item.name}</p>
-                    <p className="text-xs text-muted-foreground">{item.role}</p>
-                  </div>
                 </article>
               ))}
             </div>
