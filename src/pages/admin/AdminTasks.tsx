@@ -36,16 +36,26 @@ import {
   Search,
   MessageSquare,
   CheckSquare,
+  MoreHorizontal,
+  ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TaskComments } from "@/components/TaskComments";
 import { ChecklistRunner } from "@/components/ChecklistRunner";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 const AdminTasks = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [commentsDialogOpen, setCommentsDialogOpen] = useState(false);
@@ -404,18 +414,34 @@ const AdminTasks = () => {
                     </TableCell>
                     <TableCell>{task.due_date || "—"}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         <ChecklistRunner
                           taskId={task.id}
                           projectId={task.project_id}
                         />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openCommentsDialog(task)}
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => openCommentsDialog(task)}
+                            >
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Open Comments
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate(`/admin/projects/${task.project_id}`)
+                              }
+                            >
+                              <ExternalLink className="mr-2 h-4 w-4" />
+                              Open Deal
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
