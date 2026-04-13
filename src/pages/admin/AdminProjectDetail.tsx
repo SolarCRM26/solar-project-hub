@@ -21,6 +21,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
@@ -123,6 +134,8 @@ type DealFlowItem = {
   projectStage: string | null;
   stageCardKey: string;
 };
+
+const CREATE_NEW_SECTION_OPTION = "__create_new_section__";
 
 const defaultInstallationChecklistSections: ChecklistSectionDefinition[] = [
   {
@@ -364,7 +377,7 @@ const AdminProjectDetail = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [activeTab, setActiveTab] = useState("installation");
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
 
@@ -396,6 +409,12 @@ const AdminProjectDetail = () => {
   >(defaultInstallationChecklistSections);
   const [newInstallationStageTitle, setNewInstallationStageTitle] =
     useState("");
+  const [newInstallationSectionTitle, setNewInstallationSectionTitle] =
+    useState("");
+  const [selectedSectionForNewActivity, setSelectedSectionForNewActivity] =
+    useState("");
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState("");
   const [selectedFlowKey, setSelectedFlowKey] =
     useState<DealFlowItem["key"]>("site_survey");
   const [stageFilesState, setStageFilesState] = useState<
@@ -676,6 +695,26 @@ const AdminProjectDetail = () => {
       }, 140);
     });
   }, [activeInstallationSection]);
+
+  useEffect(() => {
+    if (installationSections.length === 0) {
+      setSelectedSectionForNewActivity("");
+      return;
+    }
+
+    const sectionExists = installationSections.some(
+      (section) => section.id === selectedSectionForNewActivity,
+    );
+
+    if (!selectedSectionForNewActivity || !sectionExists) {
+      const preferredSection = installationSections.some(
+        (section) => section.id === "installation",
+      )
+        ? "installation"
+        : installationSections[0].id;
+      setSelectedSectionForNewActivity(preferredSection);
+    }
+  }, [installationSections, selectedSectionForNewActivity]);
 
   const updateProject = useMutation({
     mutationFn: async () => {
@@ -987,6 +1026,8 @@ const AdminProjectDetail = () => {
   if (isLoading) return <div className="p-6">Loading...</div>;
   if (!project) return <div className="p-6">Project not found</div>;
 
+  const canCustomizeInstallation = hasRole("admin");
+
   const currentStage = form.stage || project.stage;
   const stageIndex = dealStageFlow.findIndex(
     (stage) => stage.key === selectedFlowKey,
@@ -1131,29 +1172,133 @@ const AdminProjectDetail = () => {
     });
   };
 
+  const makeSectionId = (title: string) => {
+    const slug = title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    return `${slug || "section"}-${Date.now()}`;
+  };
+
+  const startEditingSection = (section: ChecklistSectionDefinition) => {
+    setEditingSectionId(section.id);
+    setEditingSectionTitle(section.title);
+  };
+
+  const saveSectionTitle = (sectionId: string) => {
+    const title = editingSectionTitle.trim();
+    if (!title) return;
+
+    const nextSections = installationSections.map((section) =>
+      section.id === sectionId ? { ...section, title } : section,
+    );
+
+    setInstallationSections(nextSections);
+    setEditingSectionId(null);
+    setEditingSectionTitle("");
+    persistInstallationConfig(nextSections);
+  };
+
+  const removeInstallationSection = (sectionId: string) => {
+    if (installationSections.length <= 1) {
+      toast({
+        title: "Cannot delete section",
+        description: "At least one installation section is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const sectionToRemove = installationSections.find(
+      (section) => section.id === sectionId,
+    );
+    if (!sectionToRemove) return;
+
+    const removedItemIds = new Set(sectionToRemove.items.map((item) => item.id));
+    const nextSections = installationSections.filter(
+      (section) => section.id !== sectionId,
+    );
+
+    setInstallationSections(nextSections);
+
+    if (activeInstallationSection === sectionId) {
+      setActiveInstallationSection("");
+    }
+
+    setChecklistState((prev) => {
+      if (removedItemIds.size === 0) return prev;
+
+      const nextState = { ...prev };
+      removedItemIds.forEach((itemId) => {
+        delete nextState[itemId];
+      });
+
+      saveChecklistStateMutation.mutate(nextState);
+      return nextState;
+    });
+
+    persistInstallationConfig(nextSections);
+  };
+
   const addInstallationStage = () => {
     const title = newInstallationStageTitle.trim();
     if (!title) return;
+
+    const shouldCreateSection =
+      selectedSectionForNewActivity === CREATE_NEW_SECTION_OPTION;
+    const resolvedSectionTitle = newInstallationSectionTitle.trim();
+
+    if (shouldCreateSection && !resolvedSectionTitle) {
+      toast({
+        title: "Section name required",
+        description: "Enter a section name when creating a new section.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const targetSectionId = shouldCreateSection
+      ? makeSectionId(resolvedSectionTitle)
+      : selectedSectionForNewActivity;
+
+    if (!targetSectionId) return;
 
     const newItem: ChecklistItemDefinition = {
       id: `custom-${Date.now()}`,
       title,
     };
 
-    const nextSections = installationSections.map((section) =>
-      section.id === "installation"
+    const baseSections = shouldCreateSection
+      ? [
+          ...installationSections,
+          {
+            id: targetSectionId,
+            title: resolvedSectionTitle,
+            items: [],
+          },
+        ]
+      : installationSections;
+
+    const nextSections = baseSections.map((section) =>
+      section.id === targetSectionId
         ? { ...section, items: [...section.items, newItem] }
         : section,
     );
 
     setInstallationSections(nextSections);
     setNewInstallationStageTitle("");
+    if (shouldCreateSection) {
+      setSelectedSectionForNewActivity(targetSectionId);
+      setNewInstallationSectionTitle("");
+      setActiveInstallationSection(targetSectionId);
+    }
     persistInstallationConfig(nextSections);
   };
 
   const removeInstallationStage = (itemId: string) => {
     const nextSections = installationSections.map((section) =>
-      section.id === "installation"
+      section.items.some((item) => item.id === itemId)
         ? {
             ...section,
             items: section.items.filter((item) => item.id !== itemId),
@@ -1302,19 +1447,6 @@ const AdminProjectDetail = () => {
               );
             })}
           </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-border/50 bg-card/70">
-        <CardContent className="p-4 md:p-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full justify-start rounded-xl h-11 text-sm font-semibold"
-            onClick={() => setActiveTab("stage-files")}
-          >
-            {project.name} Dashboard
-          </Button>
         </CardContent>
       </Card>
 
@@ -1568,23 +1700,69 @@ const AdminProjectDetail = () => {
                   Track all activities from material delivery to project
                   closeout. Each activity supports file uploads (images/PDFs).
                 </p>
-                <div className="mt-4 flex flex-col sm:flex-row gap-2">
-                  <Input
-                    value={newInstallationStageTitle}
-                    onChange={(e) =>
-                      setNewInstallationStageTitle(e.target.value)
-                    }
-                    placeholder="Add a custom installation stage"
-                    className="sm:max-w-sm"
-                  />
-                  <Button
-                    type="button"
-                    onClick={addInstallationStage}
-                    disabled={!newInstallationStageTitle.trim()}
-                  >
-                    Add Stage
-                  </Button>
-                </div>
+                {canCustomizeInstallation ? (
+                  <div className="mt-4 space-y-3">
+                    <p className="text-sm font-medium">Admin Customization</p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Select
+                        value={selectedSectionForNewActivity}
+                        onValueChange={setSelectedSectionForNewActivity}
+                      >
+                        <SelectTrigger className="sm:max-w-sm">
+                          <SelectValue placeholder="Select section" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {installationSections.map((section) => (
+                            <SelectItem key={section.id} value={section.id}>
+                              {section.title}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value={CREATE_NEW_SECTION_OPTION}>
+                            + Create New Section
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {selectedSectionForNewActivity ===
+                    CREATE_NEW_SECTION_OPTION ? (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Input
+                          value={newInstallationSectionTitle}
+                          onChange={(e) =>
+                            setNewInstallationSectionTitle(e.target.value)
+                          }
+                          placeholder="Enter new section name"
+                          className="sm:max-w-sm"
+                        />
+                      </div>
+                    ) : null}
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Input
+                        value={newInstallationStageTitle}
+                        onChange={(e) =>
+                          setNewInstallationStageTitle(e.target.value)
+                        }
+                        placeholder="Add a custom activity to Installation section"
+                        className="sm:max-w-sm"
+                      />
+                      <Button
+                        type="button"
+                        onClick={addInstallationStage}
+                        disabled={
+                          !newInstallationStageTitle.trim() ||
+                          !selectedSectionForNewActivity ||
+                          (selectedSectionForNewActivity ===
+                            CREATE_NEW_SECTION_OPTION &&
+                            !newInstallationSectionTitle.trim())
+                        }
+                      >
+                        Add Activity
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>
@@ -1630,13 +1808,110 @@ const AdminProjectDetail = () => {
                   }}
                 >
                   <AccordionTrigger className="hover:no-underline py-4">
-                    <div className="flex items-center justify-between w-full pr-3">
-                      <span className="font-semibold text-left">
-                        {section.title}
-                      </span>
-                      <Badge variant="secondary">
-                        {sectionCompleted}/{section.items.length}
-                      </Badge>
+                    <div className="flex w-full items-center justify-between gap-3 pr-3">
+                      {editingSectionId === section.id ? (
+                        <div className="flex flex-1 items-center gap-2">
+                          <Input
+                            value={editingSectionTitle}
+                            onChange={(e) =>
+                              setEditingSectionTitle(e.target.value)
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-8 max-w-sm"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              saveSectionTitle(section.id);
+                            }}
+                            disabled={!editingSectionTitle.trim()}
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingSectionId(null);
+                              setEditingSectionTitle("");
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="font-semibold text-left">
+                          {section.title}
+                        </span>
+                      )}
+
+                      <div className="ml-auto flex items-center gap-2">
+                        <Badge variant="secondary">
+                          {sectionCompleted}/{section.items.length}
+                        </Badge>
+
+                        {canCustomizeInstallation &&
+                        editingSectionId !== section.id ? (
+                          <div className="flex items-center gap-1 rounded-full border border-border bg-muted/30 px-1 py-0.5">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 rounded-full"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingSection(section);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 rounded-full text-destructive"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete section?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will remove the section "{section.title}" and all of its activities from this deal.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    Cancel
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeInstallationSection(section.id);
+                                    }}
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="pb-4">
@@ -1674,7 +1949,7 @@ const AdminProjectDetail = () => {
                               <h4 className="text-xl font-semibold leading-tight text-primary">
                                 {item.title}
                               </h4>
-                              {section.id === "installation" && (
+                              {canCustomizeInstallation && (
                                 <Button
                                   type="button"
                                   variant="ghost"
