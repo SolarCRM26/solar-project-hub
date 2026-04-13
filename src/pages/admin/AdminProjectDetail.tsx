@@ -378,7 +378,7 @@ const AdminProjectDetail = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, hasRole } = useAuth();
-  const [activeTab, setActiveTab] = useState("installation");
+  const [activeTab, setActiveTab] = useState("stage-detail");
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
 
   const [form, setForm] = useState({
