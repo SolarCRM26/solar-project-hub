@@ -13,23 +13,29 @@ const stageColors: Record<string, string> = {
 };
 
 const stageLabels: Record<string, string> = {
-  lead_created: "Lead Created",
-  proposal_approved: "Proposal Approved",
+  lead_created: "Site Survey",
+  proposal_approved: "Proposal Submitted",
   contract_signed: "Contract Signed",
   design_started: "Design Started",
-  design_approved: "Design Approved",
-  build_started: "Build Started",
-  qa_passed: "QA Passed",
-  commissioned: "Commissioned",
+  design_approved: "Procurement",
+  build_started: "Installation",
+  qa_passed: "HR",
+  commissioned: "PV Monitor",
   closeout_delivered: "Closeout Delivered",
 };
 
-export const StageBadge = ({ stage }: { stage: string }) => {
+export const StageBadge = ({
+  stage,
+  label,
+}: {
+  stage: string;
+  label?: string;
+}) => {
   return (
     <Badge
       className={`${stageColors[stage] || "bg-muted text-muted-foreground"} border-0 font-medium`}
     >
-      {stageLabels[stage] || stage}
+      {label || stageLabels[stage] || stage}
     </Badge>
   );
 };

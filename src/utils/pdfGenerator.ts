@@ -94,7 +94,7 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
     ['Project Name:', data.project.name],
     ['Type:', data.project.project_type.replace('_', ' ').toUpperCase()],
     ['Capacity:', data.project.capacity_kw ? `${data.project.capacity_kw} kW` : 'N/A'],
-    ['Status:', 'COMMISSIONED & CLOSED'],
+    ['Status:', 'PV MONITOR & CLOSEOUT DELIVERED'],
     ['Start Date:', data.project.start_date ? new Date(data.project.start_date).toLocaleDateString() : 'N/A'],
     ['Completion Date:', data.project.target_completion ? new Date(data.project.target_completion).toLocaleDateString() : 'N/A'],
   ];
@@ -336,7 +336,7 @@ export const generateCloseoutPackagePDF = async (data: CloseoutPackageData): Pro
   yPos += 15;
 
   doc.setFontSize(10);
-  doc.text('This solar photovoltaic system has been installed, commissioned, and tested', 20, yPos);
+  doc.text('This solar photovoltaic system has been installed, validated, and fully documented', 20, yPos);
   yPos += 7;
   doc.text('in accordance with all applicable codes and standards.', 20, yPos);
   yPos += 15;

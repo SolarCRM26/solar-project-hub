@@ -144,10 +144,10 @@ const SalesDashboard = () => {
           title="New Leads"
           value={leadCount}
           icon={UserRoundPlus}
-          description="Stage: lead created"
+          description="Stage: Site Survey"
         />
         <StatsCard
-          title="Proposals Approved"
+          title="Proposals Submitted"
           value={proposalCount}
           icon={FileCheck2}
           description="Ready for commercial close"

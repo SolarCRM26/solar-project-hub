@@ -18,6 +18,26 @@ import {
 import { FolderKanban, Zap, ListTodo, Clock, Sun } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const dealStageFlow = [
+  "lead_created",
+  "design_started",
+  "proposal_approved",
+  "contract_signed",
+  "design_approved",
+  "build_started",
+  "closeout_delivered",
+] as const;
+
+const dealStageLabels: Record<string, string> = {
+  lead_created: "Site Survey",
+  design_started: "Design Started",
+  proposal_approved: "Proposal Submitted",
+  contract_signed: "Contract Signed",
+  design_approved: "Procurement",
+  build_started: "Installation",
+  closeout_delivered: "Closeout Delivered",
+};
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
@@ -61,6 +81,11 @@ const AdminDashboard = () => {
     acc[p.stage] = (acc[p.stage] || 0) + 1;
     return acc;
   }, {});
+
+  const extraStages = Object.keys(stageGroups).filter(
+    (stage) => !dealStageFlow.includes(stage as (typeof dealStageFlow)[number]),
+  );
+  const stageDisplayOrder = [...dealStageFlow, ...extraStages];
 
   const recentDeals = projects.slice(0, 5);
   const urgentTasks = tasks.filter((t) => t.status !== "completed").slice(0, 5);
@@ -111,13 +136,16 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {Object.entries(stageLabels).map(([key, label]) => {
+              {stageDisplayOrder.map((key) => {
                 const count = stageGroups[key] || 0;
                 const pct =
                   totalProjects > 0 ? (count / totalProjects) * 100 : 0;
                 return (
                   <div key={key} className="flex items-center gap-3">
-                    <StageBadge stage={key} />
+                    <StageBadge
+                      stage={key}
+                      label={dealStageLabels[key] || stageLabels[key] || key}
+                    />
                     <div className="flex-1 bg-muted rounded-full h-2">
                       <div
                         className="bg-primary h-2 rounded-full transition-all"
