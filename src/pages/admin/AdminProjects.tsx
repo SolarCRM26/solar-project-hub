@@ -523,7 +523,7 @@ const AdminProjects = () => {
               <Plus className="h-4 w-4 mr-2" /> New Deal
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Project</DialogTitle>
             </DialogHeader>
