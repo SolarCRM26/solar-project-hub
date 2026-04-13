@@ -434,6 +434,12 @@ const AdminProjectDetail = () => {
   const [newSiteClientId, setNewSiteClientId] = useState("");
   const [newSiteLatitude, setNewSiteLatitude] = useState("");
   const [newSiteLongitude, setNewSiteLongitude] = useState("");
+  const [deletingChecklistFilePath, setDeletingChecklistFilePath] = useState<
+    string | null
+  >(null);
+  const [deletingStageFilePath, setDeletingStageFilePath] = useState<
+    string | null
+  >(null);
   const stageCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const installationSectionRefs = useRef<Record<string, HTMLDivElement | null>>(
     {},
@@ -1228,6 +1234,83 @@ const AdminProjectDetail = () => {
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   };
 
+  const handleChecklistFileDelete = async (itemId: string, filePath: string) => {
+    setDeletingChecklistFilePath(filePath);
+
+    try {
+      const { error: storageError } = await supabase.storage
+        .from("project-documents")
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      const currentState = getChecklistItemState(itemId);
+      const nextState = {
+        ...checklistState,
+        [itemId]: {
+          ...currentState,
+          files: currentState.files.filter((file) => file.file_path !== filePath),
+        },
+      };
+
+      setChecklistState(nextState);
+      saveChecklistStateMutation.mutate(nextState);
+      toast({ title: "File removed" });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error?.message || "Could not remove file",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingChecklistFilePath(null);
+    }
+  };
+
+  const handleStageFileDelete = async (stageKey: string, filePath: string) => {
+    const row = stageFilesState[stageKey];
+    if (!row) return;
+
+    setDeletingStageFilePath(filePath);
+
+    try {
+      const { error: storageError } = await supabase.storage
+        .from("project-documents")
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      const nextDocuments = row.documents.filter(
+        (doc) => doc.file_path !== filePath,
+      );
+
+      const updatedRow = {
+        ...row,
+        documents: nextDocuments,
+      };
+
+      setStageFilesState((prev) => ({
+        ...prev,
+        [stageKey]: updatedRow,
+      }));
+
+      saveStageFileRowMutation.mutate({
+        ...updatedRow,
+        entered_at: updatedRow.entered_at || new Date().toISOString(),
+      });
+
+      toast({ title: "File removed" });
+    } catch (error: any) {
+      toast({
+        title: "Delete failed",
+        description: error?.message || "Could not remove file",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingStageFilePath(null);
+    }
+  };
+
   const formatDateTime = (value: string | null) => {
     if (!value) return "-";
     return new Date(value).toLocaleString(undefined, {
@@ -1739,20 +1822,40 @@ const AdminProjectDetail = () => {
                       ) : (
                         <div className="space-y-1">
                           {row.documents.map((doc) => (
-                            <button
+                            <div
                               key={doc.file_path}
-                              type="button"
-                              onClick={() => openStageFile(doc.file_path)}
-                              className="w-full text-left text-xs border rounded-md px-2.5 py-2 hover:bg-accent/50 transition-colors flex items-center justify-between"
+                              className="w-full text-xs border rounded-md px-2 py-1.5 flex items-center gap-2"
                             >
-                              <span className="truncate flex items-center gap-1.5">
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                                {doc.file_name}
-                              </span>
-                              <span className="text-muted-foreground">
+                              <button
+                                type="button"
+                                onClick={() => openStageFile(doc.file_path)}
+                                className="flex-1 min-w-0 text-left hover:bg-accent/50 transition-colors rounded px-1.5 py-1"
+                              >
+                                <span className="truncate flex items-center gap-1.5">
+                                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                  {doc.file_name}
+                                </span>
+                              </button>
+                              <span className="text-muted-foreground whitespace-nowrap">
                                 {(doc.file_size / 1024).toFixed(0)} KB
                               </span>
-                            </button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 text-destructive"
+                                disabled={deletingStageFilePath === doc.file_path}
+                                onClick={() =>
+                                  handleStageFileDelete(stage.key, doc.file_path)
+                                }
+                              >
+                                {deletingStageFilePath === doc.file_path ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                )}
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -2227,22 +2330,49 @@ const AdminProjectDetail = () => {
                               ) : (
                                 <div className="space-y-2">
                                   {itemState.files.map((file) => (
-                                    <button
+                                    <div
                                       key={file.file_path}
-                                      type="button"
-                                      onClick={() =>
-                                        openChecklistFile(file.file_path)
-                                      }
-                                      className="w-full text-left text-sm border rounded-md px-3 py-2 hover:bg-accent/50 transition-colors flex items-center justify-between"
+                                      className="w-full text-sm border rounded-md px-2 py-1.5 flex items-center gap-2"
                                     >
-                                      <span className="truncate flex items-center gap-2">
-                                        <FileText className="h-4 w-4 text-muted-foreground" />
-                                        {file.file_name}
-                                      </span>
-                                      <span className="text-xs text-muted-foreground">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          openChecklistFile(file.file_path)
+                                        }
+                                        className="flex-1 min-w-0 text-left hover:bg-accent/50 transition-colors rounded px-1.5 py-1"
+                                      >
+                                        <span className="truncate flex items-center gap-2">
+                                          <FileText className="h-4 w-4 text-muted-foreground" />
+                                          {file.file_name}
+                                        </span>
+                                      </button>
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">
                                         {(file.file_size / 1024).toFixed(0)} KB
                                       </span>
-                                    </button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive"
+                                        disabled={
+                                          deletingChecklistFilePath ===
+                                          file.file_path
+                                        }
+                                        onClick={() =>
+                                          handleChecklistFileDelete(
+                                            item.id,
+                                            file.file_path,
+                                          )
+                                        }
+                                      >
+                                        {deletingChecklistFilePath ===
+                                        file.file_path ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4" />
+                                        )}
+                                      </Button>
+                                    </div>
                                   ))}
                                 </div>
                               )}
