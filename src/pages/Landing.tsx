@@ -114,16 +114,18 @@ const Landing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="fixed inset-x-0 top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-xl">
-        <header className="mx-auto flex h-[88px] w-full max-w-[1220px] items-center justify-between px-5 lg:px-8">
+        <header className="mx-auto flex h-[112px] w-full max-w-[1220px] items-center justify-between px-5 lg:px-8">
           <Link
             to="/"
-            className="flex min-w-[260px] flex-col items-start justify-center"
+            className="flex min-w-[320px] flex-col items-start justify-center lg:min-w-[390px]"
           >
-            <img
-              src="/transparent%20logo.png"
-              alt="SPD Nexus"
-              className="h-11 w-auto object-contain sm:h-12"
-            />
+            <div className="h-[52px] w-[220px] overflow-hidden sm:h-[58px] sm:w-[240px] lg:h-[72px] lg:w-[320px]">
+              <img
+                src="/transparent%20logo.png"
+                alt="SPD Nexus"
+                className="h-full w-full origin-left object-contain object-left scale-[1.95]"
+              />
+            </div>
             <p className="mt-1 pl-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-muted-foreground sm:text-[11px]">
               Solar Project Intelligence Platform
             </p>

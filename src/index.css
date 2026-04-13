@@ -49,13 +49,13 @@
     --info: 221 83% 53%;
     --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 216 68% 14%;
-    --sidebar-foreground: 215 20% 84%;
+    --sidebar-background: 42 34% 90%;
+    --sidebar-foreground: 220 46% 17%;
     --sidebar-primary: 45 93% 47%;
     --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 55% 22%;
-    --sidebar-accent-foreground: 210 35% 96%;
-    --sidebar-border: 217 45% 28%;
+    --sidebar-accent: 43 50% 82%;
+    --sidebar-accent-foreground: 220 46% 17%;
+    --sidebar-border: 38 26% 76%;
     --sidebar-ring: 45 93% 47%;
   }
 

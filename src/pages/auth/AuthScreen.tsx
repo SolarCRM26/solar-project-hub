@@ -224,37 +224,37 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-[#e2e3ea]">
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#1f2f3d] p-10 text-white">
+    <div className="min-h-screen grid lg:grid-cols-2 bg-[#eef0f5]">
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#324b62] p-10 text-[#10253a]">
         <img
           src="/image.png"
           alt="Rooftop solar installation"
           className="absolute inset-0 h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-[#0c1620]/80" />
-        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#D4A017]/20 blur-3xl" />
-        <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#66bb6a]/20 blur-3xl" />
-        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#D4A017]/26 -skew-x-[28deg]" />
-        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#B8860B]/24 -skew-x-[28deg]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(129,199,132,0.15),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(102,187,106,0.18),transparent_35%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(12,30,50,0.5),rgba(14,34,56,0.38)_48%,rgba(176,124,26,0.26))]" />
+        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#f4c742]/30 blur-3xl" />
+        <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#7ccf8f]/28 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#f0b428]/22 -skew-x-[28deg]" />
+        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#d99a1a]/18 -skew-x-[28deg]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.16),transparent_36%),radial-gradient(circle_at_80%_80%,rgba(148,226,172,0.2),transparent_34%)]" />
 
         <div className="relative z-10 w-fit">
           <img
             src="/transparent%20logo.png"
             alt="SPD Nexus"
-            className="h-28 w-auto object-contain"
+            className="h-44 w-auto object-contain"
           />
-          <p className="text-[11px] text-white/75 mt-2">
+          <p className="mt-2 w-fit rounded-md border border-[#d3dcea] bg-white px-2 py-1 text-[11px] font-medium text-[#0f2940]">
             Solar Project Intelligence Platform - Designed by Solar Power Depot
           </p>
         </div>
         <div className="mt-10"></div>
 
-        <div className="relative z-10 max-w-lg space-y-6 rounded-2xl border border-white/20 bg-black/30 p-6 backdrop-blur-sm shadow-2xl shadow-black/20">
+        <div className="relative z-10 max-w-lg space-y-6 rounded-2xl border border-[#cfd8e6] bg-white p-6 shadow-2xl shadow-black/10">
           <h2 className="text-4xl font-bold leading-tight">
             Scale your solar business from lead to energized system.
           </h2>
-          <p className="text-white/75 text-base leading-relaxed">
+          <p className="text-[#20364d]/95 text-base leading-relaxed">
             A professional workspace for managing opportunities, projects, field
             execution, and customer delivery.
           </p>
@@ -263,33 +263,33 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             {lifecycleHighlights.map((item) => (
               <div
                 key={item}
-                className="flex items-center gap-3 rounded-lg border border-white/25 bg-black/20 px-4 py-3"
+                className="flex items-center gap-3 rounded-lg border border-[#d3dcea] bg-white px-4 py-3"
               >
                 <CheckCircle2 className="h-4 w-4 text-success" />
-                <span className="text-sm text-white/90">{item}</span>
+                <span className="text-sm text-[#132b42]">{item}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-white/80 rounded-lg bg-black/30 border border-white/15 px-3 py-2 w-fit">
+        <div className="relative z-10 w-fit rounded-lg border border-[#d3dcea] bg-white px-3 py-2 text-xs text-[#0f2940]">
           Built for high-performance solar EPC and project operations teams.
         </div>
       </aside>
 
-      <main className="relative flex items-center justify-center overflow-hidden bg-[#e2e3ea] p-6 sm:p-10 lg:p-12">
+      <main className="relative flex items-center justify-center overflow-hidden bg-[#eef0f5] p-6 sm:p-10 lg:p-12">
         <img
           src="/image.png"
           alt="Solar panel field background"
-          className="absolute inset-0 h-full w-full object-cover opacity-[0.14]"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.22]"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(76,175,80,0.1),transparent_28%),radial-gradient(circle_at_85%_90%,rgba(56,142,60,0.12),transparent_32%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(255,209,92,0.16),transparent_30%),radial-gradient(circle_at_85%_90%,rgba(86,153,213,0.12),transparent_34%)]" />
         <div className="relative w-full max-w-lg space-y-4 animate-slide-in">
           <div className="lg:hidden flex flex-col items-center justify-center gap-2 text-center">
             <img
               src="/transparent%20logo.png"
               alt="SPD Nexus"
-              className="h-20 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
             <div>
               <p className="text-[11px] text-muted-foreground/90 mt-1">
