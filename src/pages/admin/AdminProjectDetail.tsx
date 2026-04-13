@@ -423,6 +423,17 @@ const AdminProjectDetail = () => {
   const [uploadingStageKey, setUploadingStageKey] = useState<string | null>(
     null,
   );
+  const [showNewOrganization, setShowNewOrganization] = useState(false);
+  const [newOrganizationName, setNewOrganizationName] = useState("");
+  const [newOrganizationAddress, setNewOrganizationAddress] = useState("");
+  const [newOrganizationPhone, setNewOrganizationPhone] = useState("");
+  const [newOrganizationEmail, setNewOrganizationEmail] = useState("");
+  const [showNewSite, setShowNewSite] = useState(false);
+  const [newSiteName, setNewSiteName] = useState("");
+  const [newSiteAddress, setNewSiteAddress] = useState("");
+  const [newSiteClientId, setNewSiteClientId] = useState("");
+  const [newSiteLatitude, setNewSiteLatitude] = useState("");
+  const [newSiteLongitude, setNewSiteLongitude] = useState("");
   const stageCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const installationSectionRefs = useRef<Record<string, HTMLDivElement | null>>(
     {},
@@ -560,6 +571,90 @@ const AdminProjectDetail = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: organizations = [] } = useQuery({
+    queryKey: ["organizations-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients-list"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("clients")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const createOrganization = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("organizations")
+        .insert({
+          name: newOrganizationName.trim(),
+          address: newOrganizationAddress.trim() || null,
+          phone: newOrganizationPhone.trim() || null,
+          email: newOrganizationEmail.trim() || null,
+        })
+        .select("id, name")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (organization) => {
+      queryClient.invalidateQueries({ queryKey: ["organizations-list"] });
+      setForm((f) => ({ ...f, organization_id: organization.id }));
+      setNewOrganizationName("");
+      setNewOrganizationAddress("");
+      setNewOrganizationPhone("");
+      setNewOrganizationEmail("");
+      setShowNewOrganization(false);
+      toast({ title: "Organization created" });
+    },
+    onError: (e: any) =>
+      toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const createSite = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("sites")
+        .insert({
+          name: newSiteName.trim(),
+          address: newSiteAddress.trim() || null,
+          client_id: newSiteClientId,
+          latitude: newSiteLatitude ? parseFloat(newSiteLatitude) : null,
+          longitude: newSiteLongitude ? parseFloat(newSiteLongitude) : null,
+        })
+        .select("id, name")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (site) => {
+      queryClient.invalidateQueries({ queryKey: ["sites-list"] });
+      setForm((f) => ({ ...f, site_id: site.id }));
+      setNewSiteName("");
+      setNewSiteAddress("");
+      setNewSiteClientId("");
+      setNewSiteLatitude("");
+      setNewSiteLongitude("");
+      setShowNewSite(false);
+      toast({ title: "Site created" });
+    },
+    onError: (e: any) =>
+      toast({ title: "Error", description: e.message, variant: "destructive" }),
   });
 
   const { data: checklistRunData } = useQuery({
@@ -2279,7 +2374,7 @@ const AdminProjectDetail = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Client (Customer User)</Label>
                   <Select
@@ -2305,7 +2400,91 @@ const AdminProjectDetail = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Site</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Organization</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setShowNewOrganization((prev) => !prev)}
+                    >
+                      {showNewOrganization ? "Cancel" : "+ New"}
+                    </Button>
+                  </div>
+                  <Select
+                    value={form.organization_id || "none"}
+                    onValueChange={(v) =>
+                      setForm((f) => ({
+                        ...f,
+                        organization_id: v === "none" ? "" : v,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {showNewOrganization ? (
+                    <div className="space-y-2 rounded-md border border-border/70 p-2">
+                      <Input
+                        value={newOrganizationName}
+                        onChange={(e) => setNewOrganizationName(e.target.value)}
+                        placeholder="Organization name"
+                      />
+                      <Input
+                        value={newOrganizationAddress}
+                        onChange={(e) =>
+                          setNewOrganizationAddress(e.target.value)
+                        }
+                        placeholder="Address"
+                      />
+                      <Input
+                        value={newOrganizationPhone}
+                        onChange={(e) => setNewOrganizationPhone(e.target.value)}
+                        placeholder="Phone"
+                      />
+                      <Input
+                        type="email"
+                        value={newOrganizationEmail}
+                        onChange={(e) => setNewOrganizationEmail(e.target.value)}
+                        placeholder="Email"
+                      />
+                      <Button
+                        type="button"
+                        className="h-8 w-full"
+                        disabled={
+                          createOrganization.isPending ||
+                          !newOrganizationName.trim()
+                        }
+                        onClick={() => createOrganization.mutate()}
+                      >
+                        {createOrganization.isPending
+                          ? "Saving..."
+                          : "Create Organization"}
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Site</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setShowNewSite((prev) => !prev)}
+                    >
+                      {showNewSite ? "Cancel" : "+ New"}
+                    </Button>
+                  </div>
                   <Select
                     value={form.site_id || "none"}
                     onValueChange={(v) =>
@@ -2324,6 +2503,67 @@ const AdminProjectDetail = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {showNewSite ? (
+                    <div className="space-y-2 rounded-md border border-border/70 p-2">
+                      <Input
+                        value={newSiteName}
+                        onChange={(e) => setNewSiteName(e.target.value)}
+                        placeholder="Site name"
+                      />
+                      <Input
+                        value={newSiteAddress}
+                        onChange={(e) => setNewSiteAddress(e.target.value)}
+                        placeholder="Site address"
+                      />
+                      <Select
+                        value={newSiteClientId || "none"}
+                        onValueChange={(v) =>
+                          setNewSiteClientId(v === "none" ? "" : v)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Select client</SelectItem>
+                          {clients.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          step="any"
+                          value={newSiteLatitude}
+                          onChange={(e) => setNewSiteLatitude(e.target.value)}
+                          placeholder="Latitude (optional)"
+                        />
+                        <Input
+                          type="number"
+                          step="any"
+                          value={newSiteLongitude}
+                          onChange={(e) => setNewSiteLongitude(e.target.value)}
+                          placeholder="Longitude (optional)"
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        className="h-8 w-full"
+                        disabled={
+                          createSite.isPending ||
+                          !newSiteName.trim() ||
+                          !newSiteAddress.trim() ||
+                          !newSiteClientId
+                        }
+                        onClick={() => createSite.mutate()}
+                      >
+                        {createSite.isPending ? "Saving..." : "Create Site"}
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </CardContent>

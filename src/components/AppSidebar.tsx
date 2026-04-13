@@ -25,8 +25,6 @@ import {
   LogOut,
   User,
   Users,
-  Building2,
-  MapPin,
   ListChecks,
   BarChart3,
   ClipboardList,
@@ -42,8 +40,6 @@ const adminItems = [
   { title: "Reports", url: "/admin/reports", icon: BarChart3 },
   { title: "Audit Logs", url: "/admin/audit-logs", icon: ClipboardList },
   { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Organizations", url: "/admin/organizations", icon: Building2 },
-  { title: "Sites", url: "/admin/sites", icon: MapPin },
 ];
 
 const salesItems = [
