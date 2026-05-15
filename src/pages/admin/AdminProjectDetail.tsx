@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/table";
 import { StageBadge, stageLabels } from "@/components/StatusBadges";
 import {
+  FolderKanban,
   ArrowLeft,
   Save,
   UserPlus,
@@ -378,7 +379,7 @@ const AdminProjectDetail = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, hasRole } = useAuth();
-  const [activeTab, setActiveTab] = useState("stage-detail");
+  const [activeTab, setActiveTab] = useState("installation");
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
 
   const [form, setForm] = useState({
@@ -1449,13 +1450,13 @@ const AdminProjectDetail = () => {
 
     const baseSections = shouldCreateSection
       ? [
-          ...installationSections,
-          {
-            id: targetSectionId,
-            title: resolvedSectionTitle,
-            items: [],
-          },
-        ]
+        ...installationSections,
+        {
+          id: targetSectionId,
+          title: resolvedSectionTitle,
+          items: [],
+        },
+      ]
       : installationSections;
 
     const nextSections = baseSections.map((section) =>
@@ -1478,9 +1479,9 @@ const AdminProjectDetail = () => {
     const nextSections = installationSections.map((section) =>
       section.items.some((item) => item.id === itemId)
         ? {
-            ...section,
-            items: section.items.filter((item) => item.id !== itemId),
-          }
+          ...section,
+          items: section.items.filter((item) => item.id !== itemId),
+        }
         : section,
     );
 
@@ -1631,7 +1632,11 @@ const AdminProjectDetail = () => {
                   }
                   onClick={() => {
                     setSelectedFlowKey(stage.key);
-                    setActiveTab("stage-detail");
+                    if (stage.key === "installation") {
+                      setActiveTab("installation");
+                    } else {
+                      setActiveTab("stage-files");
+                    }
                     if (stage.projectStage) {
                       setForm((f) => ({
                         ...f,
@@ -1650,7 +1655,6 @@ const AdminProjectDetail = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="stage-detail">Stage Page</TabsTrigger>
           <TabsTrigger value="stage-files">Project Dashboard</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
@@ -1658,139 +1662,7 @@ const AdminProjectDetail = () => {
           <TabsTrigger value="tasks">Tasks (0)</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stage-detail" className="space-y-4">
-          {(() => {
-            const stage = selectedStageDefinition;
-            const row = stageFilesState[stage.key] || {
-              project_id: id!,
-              stage_key: stage.key,
-              stage_name: stage.name,
-              notes: "",
-              entered_at: null,
-              completed_at: null,
-              documents: [],
-            };
 
-            return (
-              <Card className="border-primary/40">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-2xl">{stage.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Entered: {formatDateTime(row.entered_at)} - Completed:{" "}
-                    {formatDateTime(row.completed_at)}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">
-                        Documents ({row.documents.length})
-                      </p>
-                      <Label
-                        htmlFor={`stage-detail-file-${stage.key}`}
-                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                      >
-                        {uploadingStageKey === stage.key ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                            Uploading
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-3.5 w-3.5 mr-1.5" />
-                            Upload
-                          </>
-                        )}
-                      </Label>
-                      <Input
-                        id={`stage-detail-file-${stage.key}`}
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        multiple
-                        disabled={uploadingStageKey === stage.key}
-                        onChange={(e) => {
-                          handleStageFileUpload(stage.key, e.target.files);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </div>
-
-                    {row.documents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        No files uploaded
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        {row.documents.map((doc) => (
-                          <div
-                            key={doc.file_path}
-                            className="w-full text-xs border rounded-md px-2 py-1.5 flex items-center gap-2"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => openStageFile(doc.file_path)}
-                              className="flex-1 min-w-0 text-left hover:bg-accent/50 transition-colors rounded px-1.5 py-1"
-                            >
-                              <span className="truncate flex items-center gap-1.5">
-                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                                {doc.file_name}
-                              </span>
-                            </button>
-                            <span className="text-muted-foreground whitespace-nowrap">
-                              {(doc.file_size / 1024).toFixed(0)} KB
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              disabled={deletingStageFilePath === doc.file_path}
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    "Are you sure you want to delete this file?",
-                                  )
-                                ) {
-                                  handleStageFileDelete(stage.key, doc.file_path);
-                                }
-                              }}
-                            >
-                              {deletingStageFilePath === doc.file_path ? (
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-3.5 w-3.5" />
-                              )}
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm">Notes</Label>
-                    <Textarea
-                      value={row.notes}
-                      placeholder={`Notes for ${stage.name} stage...`}
-                      onChange={(e) =>
-                        setStageFilesState((prev) => ({
-                          ...prev,
-                          [stage.key]: {
-                            ...row,
-                            notes: e.target.value,
-                          },
-                        }))
-                      }
-                      onBlur={() => handleStageNotesBlur(stage.key)}
-                      rows={5}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
-        </TabsContent>
 
         <TabsContent value="stage-files" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1975,7 +1847,7 @@ const AdminProjectDetail = () => {
                     </div>
 
                     {selectedSectionForNewActivity ===
-                    CREATE_NEW_SECTION_OPTION ? (
+                      CREATE_NEW_SECTION_OPTION ? (
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                           value={newInstallationSectionTitle}
@@ -2105,7 +1977,7 @@ const AdminProjectDetail = () => {
                         </Badge>
 
                         {canCustomizeInstallation &&
-                        editingSectionId !== section.id ? (
+                          editingSectionId !== section.id ? (
                           <div className="flex items-center gap-1 rounded-full border border-border bg-muted/30 px-1 py-0.5">
                             <Button
                               type="button"
@@ -2418,7 +2290,7 @@ const AdminProjectDetail = () => {
                                         }
                                       >
                                         {deletingChecklistFilePath ===
-                                        file.file_path ? (
+                                          file.file_path ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
                                           <Trash2 className="h-4 w-4" />

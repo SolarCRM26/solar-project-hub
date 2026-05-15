@@ -885,11 +885,10 @@ const AdminProjects = () => {
             <button
               type="button"
               onClick={() => setViewMode("list")}
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
-                viewMode === "list"
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${viewMode === "list"
                   ? "bg-[#5B5FE8] text-white"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               <Rows3 className="h-3.5 w-3.5" />
               List
@@ -897,11 +896,10 @@ const AdminProjects = () => {
             <button
               type="button"
               onClick={() => setViewMode("grid")}
-              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${
-                viewMode === "grid"
+              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition ${viewMode === "grid"
                   ? "bg-[#5B5FE8] text-white"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
               Grid
@@ -928,11 +926,10 @@ const AdminProjects = () => {
         <button
           type="button"
           onClick={() => setFilterStage("all")}
-          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-            filterStage === "all"
+          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${filterStage === "all"
               ? "border-[#5B5FE8]/40 bg-[#5B5FE8]/10 text-[#5B5FE8]"
               : "border-border bg-card text-muted-foreground hover:text-foreground"
-          }`}
+            }`}
         >
           All ({projects.length})
         </button>
@@ -941,11 +938,10 @@ const AdminProjects = () => {
             key={s.value}
             type="button"
             onClick={() => setFilterStage(s.value)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-              filterStage === s.value
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${filterStage === s.value
                 ? "border-[#5B5FE8]/40 bg-[#5B5FE8]/10 text-[#5B5FE8]"
                 : "border-border bg-card text-muted-foreground hover:text-foreground"
-            }`}
+              }`}
           >
             {s.label} ({stageCount(s.value)})
           </button>
@@ -1009,9 +1005,8 @@ const AdminProjects = () => {
                         }
                       >
                         <div
-                          className={`flex min-w-0 items-start gap-3 ${
-                            viewMode === "list" ? "xl:w-[32%]" : ""
-                          }`}
+                          className={`flex min-w-0 items-start gap-3 ${viewMode === "list" ? "xl:w-[32%]" : ""
+                            }`}
                         >
                           <div
                             className="mt-0.5 rounded-md p-1.5"
@@ -1036,11 +1031,10 @@ const AdminProjects = () => {
                         </div>
 
                         <div
-                          className={`items-center ${
-                            viewMode === "list"
+                          className={`items-center ${viewMode === "list"
                               ? "hidden xl:flex xl:w-[14%]"
                               : "flex"
-                          }`}
+                            }`}
                         >
                           <div className="flex -space-x-2">
                             {Array.from({ length: Math.min(3, people) }).map(
@@ -1092,9 +1086,8 @@ const AdminProjects = () => {
                         </div>
 
                         <div
-                          className={`flex items-center gap-2 ${
-                            viewMode === "list" ? "xl:w-[14%]" : ""
-                          }`}
+                          className={`flex items-center gap-2 ${viewMode === "list" ? "xl:w-[14%]" : ""
+                            }`}
                         >
                           <div
                             className="relative h-10 w-10 rounded-full"
@@ -1147,9 +1140,8 @@ const AdminProjects = () => {
                         </div>
 
                         <div
-                          className={`ml-auto ${
-                            viewMode === "list" ? "hidden xl:block" : "block"
-                          }`}
+                          className={`ml-auto ${viewMode === "list" ? "hidden xl:block" : "block"
+                            }`}
                         >
                           <div className="rounded-full p-1.5 text-[#8A94AB] transition-colors group-hover:bg-[#F2F5FB] group-hover:text-[#5B5FE8]">
                             <MoreHorizontal className="h-4 w-4" />
