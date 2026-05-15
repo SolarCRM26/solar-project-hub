@@ -1190,29 +1190,45 @@ const AdminProjectDetail = () => {
 
   const handleChecklistFileUpload = async (
     itemId: string,
-    file?: File | null,
+    files?: FileList | File[] | File | null,
   ) => {
-    if (!file) return;
+    if (!files) return;
+
+    const fileArray =
+      files instanceof FileList
+        ? Array.from(files)
+        : Array.isArray(files)
+          ? files
+          : [files];
+    if (fileArray.length === 0) return;
 
     setUploadingItemId(itemId);
 
     try {
-      const uploadedFile = await uploadChecklistFileMutation.mutateAsync({
-        itemId,
-        file,
-      });
+      const uploadedFiles: ChecklistFileMeta[] = [];
+      for (const file of fileArray) {
+        const uploadedFile = await uploadChecklistFileMutation.mutateAsync({
+          itemId,
+          file,
+        });
+        uploadedFiles.push(uploadedFile);
+      }
 
       const currentState = getChecklistItemState(itemId);
       const nextState = {
         ...checklistState,
         [itemId]: {
           ...currentState,
-          files: [...currentState.files, uploadedFile],
+          files: [...currentState.files, ...uploadedFiles],
         },
       };
 
       setChecklistState(nextState);
       saveChecklistStateMutation.mutate(nextState);
+      toast({
+        title: fileArray.length > 1 ? "Files uploaded" : "File uploaded",
+        description: `Successfully added ${fileArray.length} document(s)`,
+      });
     } finally {
       setUploadingItemId(null);
     }
@@ -2106,13 +2122,12 @@ const AdminProjectDetail = () => {
                                     type="file"
                                     accept="image/*,.pdf"
                                     className="hidden"
+                                    multiple
                                     disabled={uploadingItemId === item.id}
                                     onChange={(e) => {
-                                      const selectedFile =
-                                        e.target.files?.[0] || null;
                                       handleChecklistFileUpload(
                                         item.id,
-                                        selectedFile,
+                                        e.target.files,
                                       );
                                       e.currentTarget.value = "";
                                     }}
@@ -2235,13 +2250,12 @@ const AdminProjectDetail = () => {
                                   type="file"
                                   accept="image/*,.pdf"
                                   className="hidden"
+                                  multiple
                                   disabled={uploadingItemId === item.id}
                                   onChange={(e) => {
-                                    const selectedFile =
-                                      e.target.files?.[0] || null;
                                     handleChecklistFileUpload(
                                       item.id,
-                                      selectedFile,
+                                      e.target.files,
                                     );
                                     e.currentTarget.value = "";
                                   }}
