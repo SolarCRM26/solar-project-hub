@@ -99,3 +99,48 @@ export const getDocumentSignedUrl = async (filePath: string): Promise<string | n
     return null;
   }
 };
+
+/**
+ * Upload a file to a specific bucket
+ * @param bucket - The storage bucket name
+ * @param path - The path within the bucket
+ * @param file - The file object to upload
+ * @returns Promise<{ path: string } | null>
+ */
+export const uploadFile = async (bucket: string, path: string, file: File): Promise<{ path: string } | null> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+      });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error(`Upload to ${bucket} failed:`, error);
+    return null;
+  }
+};
+
+/**
+ * Delete a file from a specific bucket
+ * @param bucket - The storage bucket name
+ * @param paths - The path(s) within the bucket to delete
+ * @returns Promise<boolean>
+ */
+export const deleteFile = async (bucket: string, paths: string | string[]): Promise<boolean> => {
+  try {
+    const pathsArray = Array.isArray(paths) ? paths : [paths];
+    const { error } = await supabase.storage
+      .from(bucket)
+      .remove(pathsArray);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error(`Delete from ${bucket} failed:`, error);
+    return false;
+  }
+};

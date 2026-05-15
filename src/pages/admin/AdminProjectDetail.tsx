@@ -1496,9 +1496,17 @@ const AdminProjectDetail = () => {
 
   const handleStageFileUpload = async (
     stageKey: string,
-    file?: File | null,
+    files?: FileList | File[] | File | null,
   ) => {
-    if (!file) return;
+    if (!files) return;
+
+    const fileArray =
+      files instanceof FileList
+        ? Array.from(files)
+        : Array.isArray(files)
+          ? files
+          : [files];
+    if (fileArray.length === 0) return;
 
     const currentRow = stageFilesState[stageKey];
     if (!currentRow) return;
@@ -1506,17 +1514,22 @@ const AdminProjectDetail = () => {
     setUploadingStageKey(stageKey);
 
     try {
-      const uploadedFile = await uploadStageFileMutation.mutateAsync({
-        stageKey,
-        file,
-      });
+      const uploadedDocuments: StageFileDocument[] = [];
+
+      for (const file of fileArray) {
+        const uploadedFile = await uploadStageFileMutation.mutateAsync({
+          stageKey,
+          file,
+        });
+        uploadedDocuments.push(uploadedFile);
+      }
 
       const nowIso = new Date().toISOString();
       const nextRow: StageFileRow = {
         ...currentRow,
         entered_at: currentRow.entered_at || nowIso,
         completed_at: currentRow.completed_at || nowIso,
-        documents: [...currentRow.documents, uploadedFile],
+        documents: [...currentRow.documents, ...uploadedDocuments],
       };
 
       setStageFilesState((prev) => ({
@@ -1524,7 +1537,14 @@ const AdminProjectDetail = () => {
         [stageKey]: nextRow,
       }));
 
-      saveStageFileRowMutation.mutate(nextRow);
+      await saveStageFileRowMutation.mutateAsync(nextRow);
+
+      toast({
+        title: fileArray.length > 1 ? "Files uploaded" : "File uploaded",
+        description: `Successfully added ${fileArray.length} document(s)`,
+      });
+    } catch (error: any) {
+      console.error("Multi-upload failed:", error);
     } finally {
       setUploadingStageKey(null);
     }
@@ -1687,10 +1707,10 @@ const AdminProjectDetail = () => {
                         type="file"
                         accept="image/*,.pdf"
                         className="hidden"
+                        multiple
                         disabled={uploadingStageKey === stage.key}
                         onChange={(e) => {
-                          const selectedFile = e.target.files?.[0] || null;
-                          handleStageFileUpload(stage.key, selectedFile);
+                          handleStageFileUpload(stage.key, e.target.files);
                           e.currentTarget.value = "";
                         }}
                       />
@@ -1703,20 +1723,46 @@ const AdminProjectDetail = () => {
                     ) : (
                       <div className="space-y-1">
                         {row.documents.map((doc) => (
-                          <button
+                          <div
                             key={doc.file_path}
-                            type="button"
-                            onClick={() => openStageFile(doc.file_path)}
-                            className="w-full text-left text-xs border rounded-md px-2.5 py-2 hover:bg-accent/50 transition-colors flex items-center justify-between"
+                            className="w-full text-xs border rounded-md px-2 py-1.5 flex items-center gap-2"
                           >
-                            <span className="truncate flex items-center gap-1.5">
-                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                              {doc.file_name}
-                            </span>
-                            <span className="text-muted-foreground">
+                            <button
+                              type="button"
+                              onClick={() => openStageFile(doc.file_path)}
+                              className="flex-1 min-w-0 text-left hover:bg-accent/50 transition-colors rounded px-1.5 py-1"
+                            >
+                              <span className="truncate flex items-center gap-1.5">
+                                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                                {doc.file_name}
+                              </span>
+                            </button>
+                            <span className="text-muted-foreground whitespace-nowrap">
                               {(doc.file_size / 1024).toFixed(0)} KB
                             </span>
-                          </button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              disabled={deletingStageFilePath === doc.file_path}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    "Are you sure you want to delete this file?",
+                                  )
+                                ) {
+                                  handleStageFileDelete(stage.key, doc.file_path);
+                                }
+                              }}
+                            >
+                              {deletingStageFilePath === doc.file_path ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              )}
+                            </Button>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -1806,10 +1852,10 @@ const AdminProjectDetail = () => {
                           type="file"
                           accept="image/*,.pdf"
                           className="hidden"
+                          multiple
                           disabled={uploadingStageKey === stage.key}
                           onChange={(e) => {
-                            const selectedFile = e.target.files?.[0] || null;
-                            handleStageFileUpload(stage.key, selectedFile);
+                            handleStageFileUpload(stage.key, e.target.files);
                             e.currentTarget.value = "";
                           }}
                         />
@@ -1843,11 +1889,17 @@ const AdminProjectDetail = () => {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-destructive"
+                                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 disabled={deletingStageFilePath === doc.file_path}
-                                onClick={() =>
-                                  handleStageFileDelete(stage.key, doc.file_path)
-                                }
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      "Are you sure you want to delete this file?",
+                                    )
+                                  ) {
+                                    handleStageFileDelete(stage.key, doc.file_path);
+                                  }
+                                }}
                               >
                                 {deletingStageFilePath === doc.file_path ? (
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
