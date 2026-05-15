@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,6 +41,7 @@ const projectTypes = [
   { value: "rooftop", label: "Rooftop" },
   { value: "ground_mount", label: "Ground Mount" },
   { value: "carport", label: "Carport" },
+  { value: "electrical_contracts", label: "Electrical Contracts" },
 ];
 
 const stages = Object.entries(stageLabels).map(([value, label]) => ({
@@ -95,6 +96,7 @@ const AdminProjects = () => {
     name: "",
     description: "",
     project_type: "rooftop" as string,
+    client_type: "residential" as string,
     stage: "lead_created" as string,
     capacity_kw: "",
     estimated_cost: "",
@@ -105,6 +107,24 @@ const AdminProjects = () => {
     client_id: "",
     engineer_id: "",
   });
+
+  // Auto-populate client field if current user is a client/customer
+  useEffect(() => {
+    if (open && user) {
+      const checkClientStatus = async () => {
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id);
+        
+        const isClient = roles?.some(r => ["client", "customer"].includes(r.role));
+        if (isClient) {
+          setForm(f => ({ ...f, client_id: user.id }));
+        }
+      };
+      checkClientStatus();
+    }
+  }, [open, user]);
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
@@ -146,12 +166,12 @@ const AdminProjects = () => {
   });
 
   const { data: engineers = [] } = useQuery({
-    queryKey: ["engineers-list"],
+    queryKey: ["team-members-list"],
     queryFn: async () => {
       const { data: userRoles, error: roleError } = await supabase
         .from("user_roles")
         .select("user_id")
-        .in("role", ["engineering", "execution", "engineer"]);
+        .in("role", ["admin", "project_manager", "engineer", "engineering", "execution", "qa_manager"]);
       if (roleError) throw roleError;
       if (!userRoles || userRoles.length === 0) return [];
 
@@ -335,6 +355,7 @@ const AdminProjects = () => {
           name: form.name,
           description: form.description || null,
           project_type: form.project_type as any,
+          client_type: form.client_type,
           stage: form.stage as any,
           capacity_kw: form.capacity_kw ? parseFloat(form.capacity_kw) : null,
           estimated_cost: form.estimated_cost
@@ -394,6 +415,7 @@ const AdminProjects = () => {
         name: "",
         description: "",
         project_type: "rooftop",
+        client_type: "residential",
         stage: "lead_created",
         capacity_kw: "",
         estimated_cost: "",
@@ -575,6 +597,25 @@ const AdminProjects = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Client Type</Label>
+                  <Select
+                    value={form.client_type}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, client_type: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="residential">Residential</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label>Stage</Label>
                   <Select
                     value={form.stage}
@@ -587,6 +628,30 @@ const AdminProjects = () => {
                       {stages.map((s) => (
                         <SelectItem key={s.value} value={s.value}>
                           {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Assign</Label>
+                  <Select
+                    value={form.engineer_id || "none"}
+                    onValueChange={(v) =>
+                      setForm((f) => ({
+                        ...f,
+                        engineer_id: v === "none" ? "" : v,
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select team member" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {engineers.map((e) => (
+                        <SelectItem key={e.user_id} value={e.user_id}>
+                          {e.full_name || e.email}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -660,30 +725,6 @@ const AdminProjects = () => {
                       {customers.map((c) => (
                         <SelectItem key={c.user_id} value={c.user_id}>
                           {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Assign Engineer</Label>
-                  <Select
-                    value={form.engineer_id || "none"}
-                    onValueChange={(v) =>
-                      setForm((f) => ({
-                        ...f,
-                        engineer_id: v === "none" ? "" : v,
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select engineer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
-                      {engineers.map((e) => (
-                        <SelectItem key={e.user_id} value={e.user_id}>
-                          {e.full_name || e.email}
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -73,6 +73,7 @@ const projectTypes = [
   { value: "rooftop", label: "Rooftop" },
   { value: "ground_mount", label: "Ground Mount" },
   { value: "carport", label: "Carport" },
+  { value: "electrical_contracts", label: "Electrical Contracts" },
 ];
 
 const stages = Object.entries(stageLabels).map(([value, label]) => ({
@@ -386,6 +387,7 @@ const AdminProjectDetail = () => {
     name: "",
     description: "",
     project_type: "rooftop",
+    client_type: "residential",
     stage: "lead_created",
     capacity_kw: "",
     estimated_cost: "",
@@ -482,6 +484,7 @@ const AdminProjectDetail = () => {
         name: data.name,
         description: data.description || "",
         project_type: data.project_type,
+        client_type: data.client_type || "residential",
         stage: data.stage,
         capacity_kw: data.capacity_kw?.toString() || "",
         estimated_cost: data.estimated_cost?.toString() || "",
@@ -882,6 +885,7 @@ const AdminProjectDetail = () => {
           name: form.name,
           description: form.description || null,
           project_type: form.project_type as any,
+          client_type: form.client_type,
           stage: form.stage as any,
           capacity_kw: form.capacity_kw ? parseFloat(form.capacity_kw) : null,
           estimated_cost: form.estimated_cost
@@ -2373,7 +2377,7 @@ const AdminProjectDetail = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Type</Label>
                   <Select
@@ -2394,6 +2398,26 @@ const AdminProjectDetail = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Client Type</Label>
+                  <Select
+                    value={form.client_type}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, client_type: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="residential">Residential</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Capacity (kW)</Label>
                   <Input
