@@ -51,6 +51,8 @@ import {
 } from "@/components/ui/table";
 import { StageBadge, stageLabels } from "@/components/StatusBadges";
 import {
+  Eye,
+  EyeOff,
   FolderKanban,
   ArrowLeft,
   Save,
@@ -65,7 +67,10 @@ import {
   BookOpen,
   Circle,
   CircleCheck,
+  Layers,
+  Camera,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -396,6 +401,10 @@ const AdminProjectDetail = () => {
     client_id: "",
     site_id: "",
     organization_id: "",
+    is_client_portal_active: true,
+    show_documents_to_client: true,
+    show_milestones_to_client: true,
+    show_photos_to_client: true,
   });
 
   const [teamForm, setTeamForm] = useState({
@@ -493,6 +502,10 @@ const AdminProjectDetail = () => {
         client_id: data.client_id || "",
         site_id: data.site_id || "",
         organization_id: data.organization_id || "",
+        is_client_portal_active: data.is_client_portal_active ?? true,
+        show_documents_to_client: data.show_documents_to_client ?? true,
+        show_milestones_to_client: data.show_milestones_to_client ?? true,
+        show_photos_to_client: data.show_photos_to_client ?? true,
       });
 
       return data;
@@ -896,6 +909,10 @@ const AdminProjectDetail = () => {
           client_id: resolvedClientId || null,
           site_id: form.site_id || null,
           organization_id: form.organization_id || null,
+          is_client_portal_active: form.is_client_portal_active,
+          show_documents_to_client: form.show_documents_to_client,
+          show_milestones_to_client: form.show_milestones_to_client,
+          show_photos_to_client: form.show_photos_to_client,
         };
 
         console.log("Updating project payload:", projectPayload);
@@ -2656,6 +2673,116 @@ const AdminProjectDetail = () => {
                       </Button>
                     </div>
                   ) : null}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Client Portal Visibility</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Control what the client can see in their portal
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {form.is_client_portal_active ? (
+                    <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
+                      <Eye className="h-3 w-3 mr-1" /> Portal Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="opacity-70">
+                      <EyeOff className="h-3 w-3 mr-1" /> Portal Hidden
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-4 transition-colors hover:bg-muted/50">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-base font-semibold cursor-pointer" htmlFor="portal-active">
+                      Master Portal Access
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Enable or disable the entire client portal for this project
+                  </p>
+                </div>
+                <Switch
+                  id="portal-active"
+                  checked={form.is_client_portal_active}
+                  onCheckedChange={(checked) =>
+                    setForm((f) => ({ ...f, is_client_portal_active: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col justify-between rounded-xl border border-border/50 bg-card p-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <Switch
+                      checked={form.show_documents_to_client}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, show_documents_to_client: checked }))
+                      }
+                      disabled={!form.is_client_portal_active}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-semibold block mb-1">Documents</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Sharing AFC and As-Built drawings
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-between rounded-xl border border-border/50 bg-card p-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                      <Layers className="h-5 w-5" />
+                    </div>
+                    <Switch
+                      checked={form.show_milestones_to_client}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, show_milestones_to_client: checked }))
+                      }
+                      disabled={!form.is_client_portal_active}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-semibold block mb-1">Milestones</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Real-time stage tracking and SLA
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-between rounded-xl border border-border/50 bg-card p-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <Switch
+                      checked={form.show_photos_to_client}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, show_photos_to_client: checked }))
+                      }
+                      disabled={!form.is_client_portal_active}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-semibold block mb-1">Photos</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Site survey and installation progress
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
