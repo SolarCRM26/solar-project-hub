@@ -171,7 +171,7 @@ const AdminProjects = () => {
       const { data: userRoles, error: roleError } = await supabase
         .from("user_roles")
         .select("user_id")
-        .in("role", ["admin", "project_manager", "engineer", "engineering", "execution", "qa_manager"]);
+        .in("role", ["admin", "project_manager", "sales", "engineer", "engineering", "execution", "qa_manager"]);
       if (roleError) throw roleError;
       if (!userRoles || userRoles.length === 0) return [];
 

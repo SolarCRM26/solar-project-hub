@@ -44,6 +44,8 @@ const adminItems = [
 
 const salesItems = [
   { title: "Dashboard", url: "/sales", icon: LayoutDashboard },
+  { title: "Deals", url: "/admin/projects", icon: FolderKanban },
+  { title: "Work Orders", url: "/admin/tasks", icon: ListTodo },
 ];
 
 const engineeringItems = [
