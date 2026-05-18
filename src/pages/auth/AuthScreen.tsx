@@ -224,94 +224,95 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-[#eef0f5]">
-      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#324b62] p-10 text-[#10253a]">
+    <div className="min-h-screen grid lg:grid-cols-[0.8fr_1.2fr] bg-[#eef0f5]">
+      <aside className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-b from-[#fbfbfa] via-[#f3f5f8] to-[#e6eaf0] p-10 text-[#0f2940] border-r border-[#cbd5e1]/50">
         <img
           src="/image.png"
           alt="Rooftop solar installation"
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover opacity-15 mix-blend-multiply"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(12,30,50,0.5),rgba(14,34,56,0.38)_48%,rgba(176,124,26,0.26))]" />
-        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#f4c742]/30 blur-3xl" />
-        <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#7ccf8f]/28 blur-3xl" />
-        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#f0b428]/22 -skew-x-[28deg]" />
-        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#d99a1a]/18 -skew-x-[28deg]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.16),transparent_36%),radial-gradient(circle_at_80%_80%,rgba(148,226,172,0.2),transparent_34%)]" />
+        <div className="absolute -top-32 -right-20 h-72 w-72 rounded-full bg-[#f4c742]/15 blur-3xl" />
+        <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-[#7ccf8f]/12 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-full w-[260px] bg-[#f0b428]/8 -skew-x-[28deg]" />
+        <div className="absolute -right-10 top-0 h-full w-[160px] bg-[#d99a1a]/6 -skew-x-[28deg]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(15,41,64,0.04),transparent_36%),radial-gradient(circle_at_80%_80%,rgba(124,207,143,0.06),transparent_34%)]" />
 
-        <div className="relative z-10 w-fit">
+        <div className="relative z-10 w-full flex flex-col items-center justify-center text-center select-none">
           <img
             src="/transparent%20logo.png"
             alt="SPD Nexus"
-            className="h-44 w-auto object-contain"
+            className="h-[185px] w-auto object-contain transition-all duration-300 hover:scale-[1.02] filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.06)]"
           />
-          <p className="mt-2 w-fit rounded-md border border-[#d3dcea] bg-white px-2 py-1 text-[11px] font-medium text-[#0f2940]">
+          <p className="mt-4 w-fit rounded-full border border-[#cbd5e1]/65 bg-white/95 px-3.5 py-1.5 text-[9px] font-bold uppercase tracking-wider text-[#0f2940] shadow-sm">
             Solar Project Intelligence Platform - Designed by Solar Power Depot
           </p>
         </div>
         <div className="mt-10"></div>
 
-        <div className="relative z-10 max-w-lg space-y-6 rounded-2xl border border-[#cfd8e6] bg-white p-6 shadow-2xl shadow-black/10">
-          <h2 className="text-4xl font-bold leading-tight">
-            Scale your solar business from lead to energized system.
+        <div className="relative z-10 max-w-lg space-y-6 rounded-[24px] border border-[#cfd8e6]/80 bg-white/90 p-7 shadow-[0_15px_40px_rgba(0,0,0,0.04)] backdrop-blur-md">
+          <h2 className="text-3xl font-extrabold leading-tight text-[#0f2940] tracking-tight">
+            Scale your solar business <span className="bg-gradient-to-r from-[#ca8a04] to-[#b45309] bg-clip-text text-transparent">from lead to energized system.</span>
           </h2>
-          <p className="text-[#20364d]/95 text-base leading-relaxed">
+          <p className="text-[#20364d]/90 text-sm leading-relaxed">
             A professional workspace for managing opportunities, projects, field
             execution, and customer delivery.
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {lifecycleHighlights.map((item) => (
               <div
                 key={item}
-                className="flex items-center gap-3 rounded-lg border border-[#d3dcea] bg-white px-4 py-3"
+                className="flex items-center gap-3 rounded-xl border border-[#d3dcea]/60 bg-white/95 px-4 py-3 text-[#132b42] shadow-sm transition-all duration-300 hover:bg-white hover:border-[#cbd5e1]"
               >
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span className="text-sm text-[#132b42]">{item}</span>
+                <CheckCircle2 className="h-4.5 w-4.5 text-[#ca8a04]" />
+                <span className="text-sm font-medium">{item}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 w-fit rounded-lg border border-[#d3dcea] bg-white px-3 py-2 text-xs text-[#0f2940]">
+        <div className="relative z-10 w-fit rounded-full border border-[#cbd5e1]/65 bg-white/95 px-4 py-2 text-xs text-[#20364d] shadow-sm">
           Built for high-performance solar EPC and project operations teams.
         </div>
       </aside>
 
-      <main className="relative flex items-center justify-center overflow-hidden bg-[#eef0f5] p-6 sm:p-10 lg:p-12">
+      <main className="relative flex items-center justify-center overflow-hidden bg-[#0c1e32] p-6 sm:p-10 lg:p-12 border-l border-white/5">
         <img
           src="/image.png"
           alt="Solar panel field background"
-          className="absolute inset-0 h-full w-full object-cover opacity-[0.22]"
+          className="absolute inset-0 h-full w-full object-cover opacity-20 mix-blend-overlay"
         />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(255,209,92,0.16),transparent_30%),radial-gradient(circle_at_85%_90%,rgba(86,153,213,0.12),transparent_34%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1829]/95 via-[#0e233d]/90 to-[#071321]/95" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_15%,rgba(244,199,66,0.06),transparent_30%),radial-gradient(circle_at_85%_90%,rgba(124,207,143,0.08),transparent_34%)]" />
+        
         <div className="relative w-full max-w-lg space-y-4 animate-slide-in">
-          <div className="lg:hidden flex flex-col items-center justify-center gap-2 text-center">
+          <div className="lg:hidden flex flex-col items-center justify-center gap-2 text-center mb-2">
             <img
               src="/transparent%20logo.png"
               alt="SPD Nexus"
-              className="h-24 w-auto object-contain"
+              className="h-32 w-auto object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)]"
             />
             <div>
-              <p className="text-[11px] text-muted-foreground/90 mt-1">
+              <p className="text-[11px] text-slate-300/90 mt-1">
                 Solar Project Intelligence Platform - Designed by Solar Power
                 Depot
               </p>
-              <p className="font-semibold">Solar Business Platform</p>
+              <p className="font-semibold text-white">Solar Business Platform</p>
             </div>
           </div>
 
-          <Card className="w-full shadow-2xl border border-[#d2d6df] backdrop-blur-sm bg-[#eef1f6]/95 transition-all duration-300 rounded-3xl">
+          <Card className="w-full shadow-[0_25px_60px_rgba(0,0,0,0.45)] border border-white/10 bg-[#060f1c]/55 backdrop-blur-md transition-all duration-300 rounded-[28px] text-white">
             <CardHeader className="space-y-2 pb-4">
-              <div className="flex items-center gap-2 text-[#8A6A00]">
+              <div className="flex items-center gap-2 text-[#ca8a04]">
                 <ShieldCheck className="h-5 w-5" />
                 <span className="text-sm font-medium">
                   Secure Workspace Access
                 </span>
               </div>
-              <CardTitle className="text-3xl tracking-tight text-[#131b2e]">
+              <CardTitle className="text-3xl tracking-tight text-white">
                 {isSignup ? "Create your account" : "Welcome back"}
               </CardTitle>
-              <CardDescription className="text-sm leading-relaxed text-[#5f6779]">
+              <CardDescription className="text-sm leading-relaxed text-slate-300/95">
                 {isSignup
                   ? "Create your account and start managing solar workflows with your team."
                   : "Sign in to continue managing projects, tasks, and client delivery."}
@@ -325,13 +326,13 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
               >
                 {isSignup && (
                   <div className="space-y-2">
-                    <Label htmlFor="full-name">Full Name</Label>
+                    <Label htmlFor="full-name" className="text-slate-200">Full Name</Label>
                     <Input
                       id="full-name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Jane Solar"
-                      className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
+                      className="h-11 transition-all duration-200 bg-white/5 border-white/10 focus-visible:ring-[#ca8a04]/50 text-white placeholder-white/30 focus:border-[#ca8a04]/40 focus:bg-white/10"
                     />
                     {errors.fullName && (
                       <p className="text-sm text-destructive">
@@ -342,14 +343,14 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-slate-200">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@company.com"
-                    className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
+                    className="h-11 transition-all duration-200 bg-white/5 border-white/10 focus-visible:ring-[#ca8a04]/50 text-white placeholder-white/30 focus:border-[#ca8a04]/40 focus:bg-white/10"
                   />
                   {errors.email && (
                     <p className="text-sm text-destructive">{errors.email}</p>
@@ -357,7 +358,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-slate-200">Password</Label>
                   <div className="relative">
                     <Input
                       id="password"
@@ -365,13 +366,13 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
+                      className="h-11 pr-10 transition-all duration-200 bg-white/5 border-white/10 focus-visible:ring-[#ca8a04]/50 text-white placeholder-white/30 focus:border-[#ca8a04]/40 focus:bg-white/10"
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="absolute right-1 top-1 h-8 w-8"
+                      className="absolute right-1 top-1 h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
                       onClick={() => setShowPassword((prev) => !prev)}
                     >
                       {showPassword ? (
@@ -390,7 +391,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
                 {isSignup && (
                   <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
+                    <Label htmlFor="role" className="text-slate-200">Role</Label>
                     <Select
                       value={selectedRole}
                       onValueChange={(value) => {
@@ -405,7 +406,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                     >
                       <SelectTrigger
                         id="role"
-                        className="h-11 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
+                        className="h-11 transition-all duration-200 bg-white/5 border-white/10 focus-visible:ring-[#ca8a04]/50 text-white text-left focus:border-[#ca8a04]/40"
                       >
                         <SelectValue placeholder="Select role" />
                       </SelectTrigger>
@@ -425,7 +426,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
                 {isSignup && (
                   <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
+                    <Label htmlFor="confirm-password" className="text-slate-200">Confirm Password</Label>
                     <div className="relative">
                       <Input
                         id="confirm-password"
@@ -433,13 +434,13 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="h-11 pr-10 transition-all duration-200 bg-[#d9e0ec]/65 border-[#c5cfdd] focus-visible:ring-[#D4A017]/50"
+                        className="h-11 pr-10 transition-all duration-200 bg-white/5 border-white/10 focus-visible:ring-[#ca8a04]/50 text-white placeholder-white/30 focus:border-[#ca8a04]/40 focus:bg-white/10"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-1 top-1 h-8 w-8"
+                        className="absolute right-1 top-1 h-8 w-8 text-slate-400 hover:text-white hover:bg-white/10"
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
                       >
                         {showConfirmPassword ? (
@@ -463,7 +464,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 text-sm font-medium bg-[#D4A017] text-white hover:bg-[#C79412]"
+                  className="w-full h-11 text-sm font-semibold bg-[#ca8a04] hover:bg-[#b45309] text-white transition-all duration-300 shadow-md shadow-[#ca8a04]/10 hover:shadow-[#ca8a04]/20"
                   disabled={loading}
                 >
                   {loading ? (
@@ -479,15 +480,15 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
                   )}
                 </Button>
 
-                <div className="h-px w-full bg-border/70" />
+                <div className="h-px w-full bg-white/10" />
 
-                <p className="text-sm text-[#6a7282] text-center">
+                <p className="text-sm text-slate-300/90 text-center">
                   {isSignup
                     ? "Already have an account?"
                     : "Don't have an account?"}{" "}
                   <Link
                     to={isSignup ? "/login" : "/signup"}
-                    className="text-[#8A6A00] font-semibold hover:text-[#725700] transition-colors"
+                    className="text-[#ca8a04] font-semibold hover:text-[#b45309] transition-colors"
                   >
                     {isSignup ? "Sign in" : "Create one"}
                   </Link>
@@ -496,7 +497,7 @@ export const AuthScreen = ({ mode }: AuthScreenProps) => {
             </CardContent>
           </Card>
 
-          <p className="text-center text-xs text-[#6f7685]">
+          <p className="text-center text-xs text-slate-400/90">
             Trusted workspace for modern solar operations teams.
           </p>
         </div>

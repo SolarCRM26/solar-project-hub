@@ -57,9 +57,23 @@ export const DocumentUploader = ({
     }
 
     setUploading(true);
-    setProgress(10);
+    setUploading(true);
+    setProgress(0);
 
     try {
+      const maxFileSize = 10 * 1024 * 1024; // 10MB
+      const allowedExtensions = ["pdf", "dwg", "dxf", "jpg", "jpeg", "png", "doc", "docx", "xls", "xlsx", "rvt", "ifc"];
+
+      for (const file of files) {
+        const fileExt = file.name.split(".").pop()?.toLowerCase() || "";
+        if (!allowedExtensions.includes(fileExt)) {
+          throw new Error(`File type .${fileExt} not supported: ${file.name}`);
+        }
+        if (file.size > maxFileSize) {
+          throw new Error(`File too large (max 10MB): ${file.name}`);
+        }
+      }
+
       if (documentId) {
         const { data: doc, error: docError } = await supabase
           .from("documents")
@@ -77,7 +91,7 @@ export const DocumentUploader = ({
           const mimeType = file.type || "application/octet-stream";
           const fileName = `${projectId}/${Date.now()}-${index + 1}.${fileExt}`;
 
-          setProgress(Math.round(((index + 1) / (files.length * 2)) * 100));
+          setProgress(Math.round((index / files.length) * 100));
 
           const { error: uploadError } = await supabase.storage
             .from("project-documents")
@@ -99,9 +113,6 @@ export const DocumentUploader = ({
           if (versionError) throw versionError;
 
           nextVersion += 1;
-          setProgress(
-            Math.round(((files.length + index + 1) / (files.length * 2)) * 100),
-          );
         }
 
         const { error: updateError } = await supabase
@@ -117,35 +128,52 @@ export const DocumentUploader = ({
 
         if (updateError) throw updateError;
       } else {
+        // Create new documents for each file
         for (let index = 0; index < files.length; index += 1) {
           const file = files[index];
           const fileExt = file.name.split(".").pop()?.toLowerCase() || "";
           const mimeType = file.type || "application/octet-stream";
           const fileName = `${projectId}/${Date.now()}-${index + 1}.${fileExt}`;
 
-          setProgress(Math.round(((index + 1) / (files.length * 2)) * 100));
+          setProgress(Math.round((index / files.length) * 100));
 
+          // 1. Create document record
+          const { data: newDoc, error: createDocError } = await supabase
+            .from("documents")
+            .insert({
+              project_id: projectId,
+              name: file.name.replace(`.${fileExt}`, ""),
+              document_type: documentType,
+              category: category,
+              file_format: fileExt,
+              current_version: 1,
+              state: "draft",
+            })
+            .select("id")
+            .single();
+
+          if (createDocError) throw createDocError;
+
+          // 2. Upload to storage
           const { error: uploadError } = await supabase.storage
             .from("project-documents")
             .upload(fileName, file);
 
           if (uploadError) throw uploadError;
 
-          const { error: createError } = await supabase
+          // 3. Create version record
+          const { error: versionError } = await supabase
             .from("document_versions")
             .insert({
-              document_id: documentId,
-              version_number: index + 1,
+              document_id: newDoc.id,
+              version_number: 1,
               file_path: fileName,
               file_size: file.size,
               mime_type: mimeType,
               notes: notes || null,
             });
 
-          if (createError) throw createError;
-          setProgress(
-            Math.round(((files.length + index + 1) / (files.length * 2)) * 100),
-          );
+          if (versionError) throw versionError;
         }
       }
 

@@ -51,6 +51,9 @@ import {
 } from "@/components/ui/table";
 import { StageBadge, stageLabels } from "@/components/StatusBadges";
 import {
+  Eye,
+  EyeOff,
+  FolderKanban,
   ArrowLeft,
   Save,
   UserPlus,
@@ -64,7 +67,10 @@ import {
   BookOpen,
   Circle,
   CircleCheck,
+  Layers,
+  Camera,
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -72,6 +78,7 @@ const projectTypes = [
   { value: "rooftop", label: "Rooftop" },
   { value: "ground_mount", label: "Ground Mount" },
   { value: "carport", label: "Carport" },
+  { value: "electrical_contracts", label: "Electrical Contracts" },
 ];
 
 const stages = Object.entries(stageLabels).map(([value, label]) => ({
@@ -378,13 +385,14 @@ const AdminProjectDetail = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { user, hasRole } = useAuth();
-  const [activeTab, setActiveTab] = useState("stage-detail");
+  const [activeTab, setActiveTab] = useState("installation");
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
     description: "",
     project_type: "rooftop",
+    client_type: "residential",
     stage: "lead_created",
     capacity_kw: "",
     estimated_cost: "",
@@ -393,6 +401,10 @@ const AdminProjectDetail = () => {
     client_id: "",
     site_id: "",
     organization_id: "",
+    is_client_portal_active: true,
+    show_documents_to_client: true,
+    show_milestones_to_client: true,
+    show_photos_to_client: true,
   });
 
   const [teamForm, setTeamForm] = useState({
@@ -481,6 +493,7 @@ const AdminProjectDetail = () => {
         name: data.name,
         description: data.description || "",
         project_type: data.project_type,
+        client_type: data.client_type || "residential",
         stage: data.stage,
         capacity_kw: data.capacity_kw?.toString() || "",
         estimated_cost: data.estimated_cost?.toString() || "",
@@ -489,6 +502,10 @@ const AdminProjectDetail = () => {
         client_id: data.client_id || "",
         site_id: data.site_id || "",
         organization_id: data.organization_id || "",
+        is_client_portal_active: data.is_client_portal_active ?? true,
+        show_documents_to_client: data.show_documents_to_client ?? true,
+        show_milestones_to_client: data.show_milestones_to_client ?? true,
+        show_photos_to_client: data.show_photos_to_client ?? true,
       });
 
       return data;
@@ -881,6 +898,7 @@ const AdminProjectDetail = () => {
           name: form.name,
           description: form.description || null,
           project_type: form.project_type as any,
+          client_type: form.client_type,
           stage: form.stage as any,
           capacity_kw: form.capacity_kw ? parseFloat(form.capacity_kw) : null,
           estimated_cost: form.estimated_cost
@@ -891,6 +909,10 @@ const AdminProjectDetail = () => {
           client_id: resolvedClientId || null,
           site_id: form.site_id || null,
           organization_id: form.organization_id || null,
+          is_client_portal_active: form.is_client_portal_active,
+          show_documents_to_client: form.show_documents_to_client,
+          show_milestones_to_client: form.show_milestones_to_client,
+          show_photos_to_client: form.show_photos_to_client,
         };
 
         console.log("Updating project payload:", projectPayload);
@@ -1189,29 +1211,45 @@ const AdminProjectDetail = () => {
 
   const handleChecklistFileUpload = async (
     itemId: string,
-    file?: File | null,
+    files?: FileList | File[] | File | null,
   ) => {
-    if (!file) return;
+    if (!files) return;
+
+    const fileArray =
+      files instanceof FileList
+        ? Array.from(files)
+        : Array.isArray(files)
+          ? files
+          : [files];
+    if (fileArray.length === 0) return;
 
     setUploadingItemId(itemId);
 
     try {
-      const uploadedFile = await uploadChecklistFileMutation.mutateAsync({
-        itemId,
-        file,
-      });
+      const uploadedFiles: ChecklistFileMeta[] = [];
+      for (const file of fileArray) {
+        const uploadedFile = await uploadChecklistFileMutation.mutateAsync({
+          itemId,
+          file,
+        });
+        uploadedFiles.push(uploadedFile);
+      }
 
       const currentState = getChecklistItemState(itemId);
       const nextState = {
         ...checklistState,
         [itemId]: {
           ...currentState,
-          files: [...currentState.files, uploadedFile],
+          files: [...currentState.files, ...uploadedFiles],
         },
       };
 
       setChecklistState(nextState);
       saveChecklistStateMutation.mutate(nextState);
+      toast({
+        title: fileArray.length > 1 ? "Files uploaded" : "File uploaded",
+        description: `Successfully added ${fileArray.length} document(s)`,
+      });
     } finally {
       setUploadingItemId(null);
     }
@@ -1449,13 +1487,13 @@ const AdminProjectDetail = () => {
 
     const baseSections = shouldCreateSection
       ? [
-          ...installationSections,
-          {
-            id: targetSectionId,
-            title: resolvedSectionTitle,
-            items: [],
-          },
-        ]
+        ...installationSections,
+        {
+          id: targetSectionId,
+          title: resolvedSectionTitle,
+          items: [],
+        },
+      ]
       : installationSections;
 
     const nextSections = baseSections.map((section) =>
@@ -1478,9 +1516,9 @@ const AdminProjectDetail = () => {
     const nextSections = installationSections.map((section) =>
       section.items.some((item) => item.id === itemId)
         ? {
-            ...section,
-            items: section.items.filter((item) => item.id !== itemId),
-          }
+          ...section,
+          items: section.items.filter((item) => item.id !== itemId),
+        }
         : section,
     );
 
@@ -1496,9 +1534,17 @@ const AdminProjectDetail = () => {
 
   const handleStageFileUpload = async (
     stageKey: string,
-    file?: File | null,
+    files?: FileList | File[] | File | null,
   ) => {
-    if (!file) return;
+    if (!files) return;
+
+    const fileArray =
+      files instanceof FileList
+        ? Array.from(files)
+        : Array.isArray(files)
+          ? files
+          : [files];
+    if (fileArray.length === 0) return;
 
     const currentRow = stageFilesState[stageKey];
     if (!currentRow) return;
@@ -1506,17 +1552,22 @@ const AdminProjectDetail = () => {
     setUploadingStageKey(stageKey);
 
     try {
-      const uploadedFile = await uploadStageFileMutation.mutateAsync({
-        stageKey,
-        file,
-      });
+      const uploadedDocuments: StageFileDocument[] = [];
+
+      for (const file of fileArray) {
+        const uploadedFile = await uploadStageFileMutation.mutateAsync({
+          stageKey,
+          file,
+        });
+        uploadedDocuments.push(uploadedFile);
+      }
 
       const nowIso = new Date().toISOString();
       const nextRow: StageFileRow = {
         ...currentRow,
         entered_at: currentRow.entered_at || nowIso,
         completed_at: currentRow.completed_at || nowIso,
-        documents: [...currentRow.documents, uploadedFile],
+        documents: [...currentRow.documents, ...uploadedDocuments],
       };
 
       setStageFilesState((prev) => ({
@@ -1524,7 +1575,14 @@ const AdminProjectDetail = () => {
         [stageKey]: nextRow,
       }));
 
-      saveStageFileRowMutation.mutate(nextRow);
+      await saveStageFileRowMutation.mutateAsync(nextRow);
+
+      toast({
+        title: fileArray.length > 1 ? "Files uploaded" : "File uploaded",
+        description: `Successfully added ${fileArray.length} document(s)`,
+      });
+    } catch (error: any) {
+      console.error("Multi-upload failed:", error);
     } finally {
       setUploadingStageKey(null);
     }
@@ -1611,7 +1669,11 @@ const AdminProjectDetail = () => {
                   }
                   onClick={() => {
                     setSelectedFlowKey(stage.key);
-                    setActiveTab("stage-detail");
+                    if (stage.key === "installation") {
+                      setActiveTab("installation");
+                    } else {
+                      setActiveTab("stage-files");
+                    }
                     if (stage.projectStage) {
                       setForm((f) => ({
                         ...f,
@@ -1630,7 +1692,6 @@ const AdminProjectDetail = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="h-auto flex-wrap">
-          <TabsTrigger value="stage-detail">Stage Page</TabsTrigger>
           <TabsTrigger value="stage-files">Project Dashboard</TabsTrigger>
           <TabsTrigger value="installation">Installation</TabsTrigger>
           <TabsTrigger value="details">Details</TabsTrigger>
@@ -1638,113 +1699,7 @@ const AdminProjectDetail = () => {
           <TabsTrigger value="tasks">Tasks (0)</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="stage-detail" className="space-y-4">
-          {(() => {
-            const stage = selectedStageDefinition;
-            const row = stageFilesState[stage.key] || {
-              project_id: id!,
-              stage_key: stage.key,
-              stage_name: stage.name,
-              notes: "",
-              entered_at: null,
-              completed_at: null,
-              documents: [],
-            };
 
-            return (
-              <Card className="border-primary/40">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-2xl">{stage.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    Entered: {formatDateTime(row.entered_at)} - Completed:{" "}
-                    {formatDateTime(row.completed_at)}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm font-medium">
-                        Documents ({row.documents.length})
-                      </p>
-                      <Label
-                        htmlFor={`stage-detail-file-${stage.key}`}
-                        className="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-3 text-xs font-medium cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                      >
-                        {uploadingStageKey === stage.key ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                            Uploading
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-3.5 w-3.5 mr-1.5" />
-                            Upload
-                          </>
-                        )}
-                      </Label>
-                      <Input
-                        id={`stage-detail-file-${stage.key}`}
-                        type="file"
-                        accept="image/*,.pdf"
-                        className="hidden"
-                        disabled={uploadingStageKey === stage.key}
-                        onChange={(e) => {
-                          const selectedFile = e.target.files?.[0] || null;
-                          handleStageFileUpload(stage.key, selectedFile);
-                          e.currentTarget.value = "";
-                        }}
-                      />
-                    </div>
-
-                    {row.documents.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">
-                        No files uploaded
-                      </p>
-                    ) : (
-                      <div className="space-y-1">
-                        {row.documents.map((doc) => (
-                          <button
-                            key={doc.file_path}
-                            type="button"
-                            onClick={() => openStageFile(doc.file_path)}
-                            className="w-full text-left text-xs border rounded-md px-2.5 py-2 hover:bg-accent/50 transition-colors flex items-center justify-between"
-                          >
-                            <span className="truncate flex items-center gap-1.5">
-                              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                              {doc.file_name}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {(doc.file_size / 1024).toFixed(0)} KB
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm">Notes</Label>
-                    <Textarea
-                      value={row.notes}
-                      placeholder={`Notes for ${stage.name} stage...`}
-                      onChange={(e) =>
-                        setStageFilesState((prev) => ({
-                          ...prev,
-                          [stage.key]: {
-                            ...row,
-                            notes: e.target.value,
-                          },
-                        }))
-                      }
-                      onBlur={() => handleStageNotesBlur(stage.key)}
-                      rows={5}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })()}
-        </TabsContent>
 
         <TabsContent value="stage-files" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -1806,10 +1761,10 @@ const AdminProjectDetail = () => {
                           type="file"
                           accept="image/*,.pdf"
                           className="hidden"
+                          multiple
                           disabled={uploadingStageKey === stage.key}
                           onChange={(e) => {
-                            const selectedFile = e.target.files?.[0] || null;
-                            handleStageFileUpload(stage.key, selectedFile);
+                            handleStageFileUpload(stage.key, e.target.files);
                             e.currentTarget.value = "";
                           }}
                         />
@@ -1843,11 +1798,17 @@ const AdminProjectDetail = () => {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-destructive"
+                                className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                 disabled={deletingStageFilePath === doc.file_path}
-                                onClick={() =>
-                                  handleStageFileDelete(stage.key, doc.file_path)
-                                }
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      "Are you sure you want to delete this file?",
+                                    )
+                                  ) {
+                                    handleStageFileDelete(stage.key, doc.file_path);
+                                  }
+                                }}
                               >
                                 {deletingStageFilePath === doc.file_path ? (
                                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1923,7 +1884,7 @@ const AdminProjectDetail = () => {
                     </div>
 
                     {selectedSectionForNewActivity ===
-                    CREATE_NEW_SECTION_OPTION ? (
+                      CREATE_NEW_SECTION_OPTION ? (
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                           value={newInstallationSectionTitle}
@@ -2053,7 +2014,7 @@ const AdminProjectDetail = () => {
                         </Badge>
 
                         {canCustomizeInstallation &&
-                        editingSectionId !== section.id ? (
+                          editingSectionId !== section.id ? (
                           <div className="flex items-center gap-1 rounded-full border border-border bg-muted/30 px-1 py-0.5">
                             <Button
                               type="button"
@@ -2182,13 +2143,12 @@ const AdminProjectDetail = () => {
                                     type="file"
                                     accept="image/*,.pdf"
                                     className="hidden"
+                                    multiple
                                     disabled={uploadingItemId === item.id}
                                     onChange={(e) => {
-                                      const selectedFile =
-                                        e.target.files?.[0] || null;
                                       handleChecklistFileUpload(
                                         item.id,
-                                        selectedFile,
+                                        e.target.files,
                                       );
                                       e.currentTarget.value = "";
                                     }}
@@ -2311,13 +2271,12 @@ const AdminProjectDetail = () => {
                                   type="file"
                                   accept="image/*,.pdf"
                                   className="hidden"
+                                  multiple
                                   disabled={uploadingItemId === item.id}
                                   onChange={(e) => {
-                                    const selectedFile =
-                                      e.target.files?.[0] || null;
                                     handleChecklistFileUpload(
                                       item.id,
-                                      selectedFile,
+                                      e.target.files,
                                     );
                                     e.currentTarget.value = "";
                                   }}
@@ -2366,7 +2325,7 @@ const AdminProjectDetail = () => {
                                         }
                                       >
                                         {deletingChecklistFilePath ===
-                                        file.file_path ? (
+                                          file.file_path ? (
                                           <Loader2 className="h-4 w-4 animate-spin" />
                                         ) : (
                                           <Trash2 className="h-4 w-4" />
@@ -2435,7 +2394,7 @@ const AdminProjectDetail = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Type</Label>
                   <Select
@@ -2456,6 +2415,26 @@ const AdminProjectDetail = () => {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-2">
+                  <Label>Client Type</Label>
+                  <Select
+                    value={form.client_type}
+                    onValueChange={(v) =>
+                      setForm((f) => ({ ...f, client_type: v }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="residential">Residential</SelectItem>
+                      <SelectItem value="commercial">Commercial</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Capacity (kW)</Label>
                   <Input
@@ -2694,6 +2673,116 @@ const AdminProjectDetail = () => {
                       </Button>
                     </div>
                   ) : null}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Client Portal Visibility</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Control what the client can see in their portal
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {form.is_client_portal_active ? (
+                    <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20 border-green-500/20">
+                      <Eye className="h-3 w-3 mr-1" /> Portal Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" className="opacity-70">
+                      <EyeOff className="h-3 w-3 mr-1" /> Portal Hidden
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 p-4 transition-colors hover:bg-muted/50">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Label className="text-base font-semibold cursor-pointer" htmlFor="portal-active">
+                      Master Portal Access
+                    </Label>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Enable or disable the entire client portal for this project
+                  </p>
+                </div>
+                <Switch
+                  id="portal-active"
+                  checked={form.is_client_portal_active}
+                  onCheckedChange={(checked) =>
+                    setForm((f) => ({ ...f, is_client_portal_active: checked }))
+                  }
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="flex flex-col justify-between rounded-xl border border-border/50 bg-card p-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <Switch
+                      checked={form.show_documents_to_client}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, show_documents_to_client: checked }))
+                      }
+                      disabled={!form.is_client_portal_active}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-semibold block mb-1">Documents</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Sharing AFC and As-Built drawings
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-between rounded-xl border border-border/50 bg-card p-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600">
+                      <Layers className="h-5 w-5" />
+                    </div>
+                    <Switch
+                      checked={form.show_milestones_to_client}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, show_milestones_to_client: checked }))
+                      }
+                      disabled={!form.is_client_portal_active}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-semibold block mb-1">Milestones</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Real-time stage tracking and SLA
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col justify-between rounded-xl border border-border/50 bg-card p-4 transition-all hover:shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600">
+                      <Camera className="h-5 w-5" />
+                    </div>
+                    <Switch
+                      checked={form.show_photos_to_client}
+                      onCheckedChange={(checked) =>
+                        setForm((f) => ({ ...f, show_photos_to_client: checked }))
+                      }
+                      disabled={!form.is_client_portal_active}
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-semibold block mb-1">Photos</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Site survey and installation progress
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>

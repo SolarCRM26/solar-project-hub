@@ -18,7 +18,19 @@ import {
   CalendarClock,
   TrendingUp,
   Gauge,
+  Plus,
+  Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const salesStages = [
   "lead_created",
@@ -27,7 +39,9 @@ const salesStages = [
 ] as const;
 
 const SalesDashboard = () => {
-  const { data: projects = [] } = useQuery({
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
     queryKey: ["sales-projects"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -307,7 +321,11 @@ const SalesDashboard = () => {
                   </TableRow>
                 ) : (
                   pipelineProjects.map((project) => (
-                    <TableRow key={project.id}>
+                    <TableRow 
+                      key={project.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => navigate(`/admin/projects/${project.id}`)}
+                    >
                       <TableCell className="font-medium">
                         {project.name}
                       </TableCell>

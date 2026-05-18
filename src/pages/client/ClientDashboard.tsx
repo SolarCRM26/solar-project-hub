@@ -18,6 +18,7 @@ import {
   Package,
   AlertTriangle,
   Clock3,
+  Camera,
 } from "lucide-react";
 
 const stageOrder = [
@@ -45,6 +46,7 @@ const ClientDashboard = () => {
       const { data, error } = await supabase
         .from("projects")
         .select("*")
+        .eq("is_client_portal_active", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -75,6 +77,21 @@ const ClientDashboard = () => {
         .select("*")
         .in("project_id", projectIds)
         .order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+    enabled: projects.length > 0,
+  });
+
+  const { data: photos = [] } = useQuery({
+    queryKey: ["client-photos", user?.id],
+    queryFn: async () => {
+      const projectIds = projects.map((p) => p.id);
+      if (projectIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("photos")
+        .select("*")
+        .in("project_id", projectIds);
       if (error) throw error;
       return data;
     },
@@ -360,7 +377,8 @@ const ClientDashboard = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <StageBadge stage={project.stage} />
-                    {project.stage === "closeout_delivered" && (
+                    {project.stage === "closeout_delivered" && 
+                     (project.show_documents_to_client || project.show_photos_to_client) && (
                       <Button
                         size="sm"
                         onClick={() => generateCloseoutPackage(project)}
@@ -414,7 +432,7 @@ const ClientDashboard = () => {
                   </div>
                 </div>
 
-                {projectMilestones.length > 0 && (
+                {project.show_milestones_to_client && projectMilestones.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-sm mb-3">
                       Milestone Progress
@@ -442,7 +460,7 @@ const ClientDashboard = () => {
                   </div>
                 )}
 
-                {projectDocs.length > 0 && (
+                {project.show_documents_to_client && projectDocs.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-sm mb-3">
                       Document Status
@@ -465,6 +483,43 @@ const ClientDashboard = () => {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {project.show_photos_to_client && (
+                  <div>
+                    <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                      <Camera className="h-4 w-4 text-indigo-500" />
+                      Installation Evidence
+                    </h4>
+                    {photos.filter((p) => p.project_id === project.id).length >
+                    0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {photos
+                          .filter((p) => p.project_id === project.id)
+                          .map((photo) => (
+                            <div
+                              key={photo.id}
+                              className="aspect-square rounded-lg border border-border/60 overflow-hidden bg-muted/20 relative group"
+                            >
+                              <img
+                                src={supabase.storage
+                                  .from("project-photos")
+                                  .getPublicUrl(photo.file_path).data.publicUrl}
+                                alt={photo.caption || "Installation photo"}
+                                className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                              />
+                            </div>
+                          ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 p-8 text-center">
+                        <Camera className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                        <p className="text-xs text-muted-foreground">
+                          Photo documentation will appear here as installation progresses
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

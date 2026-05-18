@@ -60,8 +60,8 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/info/:slug" element={<PublicInfoPage />} />
 
-              {/* Admin-only routes */}
-              <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+              {/* Admin & Sales routes */}
+              <Route element={<ProtectedRoute allowedRoles={["admin", "sales"]} />}>
                 <Route element={<DashboardLayout />}>
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/projects" element={<AdminProjects />} />
@@ -71,7 +71,9 @@ const App = () => (
                   />
                   <Route path="/admin/tasks" element={<AdminTasks />} />
                   <Route path="/admin/documents" element={<AdminDocuments />} />
-                  <Route path="/admin/users" element={<AdminUsers />} />
+                  <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                    <Route path="/admin/users" element={<AdminUsers />} />
+                  </Route>
                   <Route
                     path="/admin/organizations"
                     element={<AdminOrganizations />}

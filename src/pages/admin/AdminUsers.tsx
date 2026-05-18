@@ -145,6 +145,25 @@ const AdminUsers = () => {
           role: selectedRole,
         });
         if (error) throw error;
+
+        // If assigning client role, ensure a client record exists
+        if (selectedRole === "client") {
+          const { data: existingClient } = await supabase
+            .from("clients")
+            .select("id")
+            .eq("user_id", selectedUser.user_id)
+            .maybeSingle();
+
+          if (!existingClient) {
+            const { error: clientError } = await supabase.from("clients").insert({
+              user_id: selectedUser.user_id,
+              name: selectedUser.full_name || selectedUser.email,
+            });
+            if (clientError) {
+              console.error("Error auto-creating client record:", clientError);
+            }
+          }
+        }
       }
     },
     onSuccess: () => {
