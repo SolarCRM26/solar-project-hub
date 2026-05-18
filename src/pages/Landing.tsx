@@ -96,16 +96,16 @@ const Landing = () => {
         <header className="mx-auto flex h-[112px] w-full max-w-[1220px] items-center justify-between px-5 lg:px-8">
           <Link
             to="/"
-            className="flex min-w-[320px] flex-col items-start justify-center lg:min-w-[390px]"
+            className="flex flex-col items-center justify-center text-center select-none"
           >
-            <div className="h-[52px] w-[220px] overflow-hidden sm:h-[58px] sm:w-[240px] lg:h-[72px] lg:w-[320px]">
+            <div className="flex h-14 items-center justify-center sm:h-16 lg:h-20">
               <img
                 src="/transparent%20logo.png"
                 alt="SPD Nexus"
-                className="h-full w-full origin-left object-contain object-left scale-[1.95]"
+                className="h-14 w-[70px] sm:h-16 sm:w-[80px] lg:h-20 lg:w-[100px] object-contain transition-all duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.05)] hover:scale-[1.03]"
               />
             </div>
-            <p className="mt-1 pl-0.5 text-[10px] font-semibold uppercase leading-none tracking-[0.2em] text-muted-foreground sm:text-[11px]">
+            <p className="mt-1.5 text-[9px] font-bold uppercase leading-none tracking-[0.18em] text-muted-foreground/90 sm:text-[10px]">
               Solar Project Intelligence Platform
             </p>
           </Link>

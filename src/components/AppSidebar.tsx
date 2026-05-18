@@ -100,20 +100,22 @@ export function AppSidebar() {
         className={`border-b border-sidebar-border ${collapsed ? "px-2 py-3" : "px-4 py-4"}`}
       >
         <div
-          className={`flex ${collapsed ? "justify-center" : "justify-start"} ${collapsed ? "min-h-[40px]" : "min-h-[98px]"}`}
+          className={`flex justify-center ${collapsed ? "min-h-[40px]" : "min-h-[130px]"}`}
         >
           {collapsed ? (
-            <img
-              src="/transparent%20logo.png"
-              alt="SPD Nexus"
-              className="h-10 w-10 object-contain"
-            />
-          ) : (
-            <div className="h-[86px] w-[250px] max-w-full overflow-hidden">
+            <div className="flex h-10 w-10 items-center justify-center">
               <img
                 src="/transparent%20logo.png"
                 alt="SPD Nexus"
-                className="h-full w-full origin-left object-contain object-left scale-[1.9] drop-shadow-[0_1px_2px_rgba(15,23,42,0.35)]"
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex h-[120px] w-full items-center justify-center py-1 px-2">
+              <img
+                src="/transparent%20logo.png"
+                alt="SPD Nexus"
+                className="h-full w-auto object-contain transition-all duration-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.06)] hover:scale-[1.03]"
               />
             </div>
           )}
@@ -145,7 +147,7 @@ export function AppSidebar() {
                         <item.icon
                           className={`h-4 w-4 flex-shrink-0 ${!collapsed ? "mr-2" : ""}`}
                         />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span className="font-bold">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -179,7 +181,7 @@ export function AppSidebar() {
                         <item.icon
                           className={`h-4 w-4 flex-shrink-0 ${!collapsed ? "mr-2" : ""}`}
                         />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span className="font-bold">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -213,7 +215,7 @@ export function AppSidebar() {
                         <item.icon
                           className={`h-4 w-4 flex-shrink-0 ${!collapsed ? "mr-2" : ""}`}
                         />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span className="font-bold">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -247,7 +249,7 @@ export function AppSidebar() {
                         <item.icon
                           className={`h-4 w-4 flex-shrink-0 ${!collapsed ? "mr-2" : ""}`}
                         />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span className="font-bold">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -281,7 +283,7 @@ export function AppSidebar() {
                         <item.icon
                           className={`h-4 w-4 flex-shrink-0 ${!collapsed ? "mr-2" : ""}`}
                         />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span className="font-bold">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -315,7 +317,7 @@ export function AppSidebar() {
                         <item.icon
                           className={`h-4 w-4 flex-shrink-0 ${!collapsed ? "mr-2" : ""}`}
                         />
-                        {!collapsed && <span>{item.title}</span>}
+                        {!collapsed && <span className="font-bold">{item.title}</span>}
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
