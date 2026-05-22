@@ -122,6 +122,7 @@ type StageFileDocument = {
   file_size: number;
   mime_type: string;
   uploaded_at: string;
+  is_client_visible?: boolean;
 };
 
 type StageFileRow = {
@@ -1106,6 +1107,7 @@ const AdminProjectDetail = () => {
         file_size: file.size,
         mime_type: file.type,
         uploaded_at: new Date().toISOString(),
+        is_client_visible: true,
       } as StageFileDocument;
     },
     onError: (e: any) =>
@@ -1347,6 +1349,36 @@ const AdminProjectDetail = () => {
     } finally {
       setDeletingStageFilePath(null);
     }
+  };
+
+  const updateStageFileVisibility = async (
+    stageKey: string,
+    filePath: string,
+    isClientVisible: boolean,
+  ) => {
+    const row = stageFilesState[stageKey];
+    if (!row) return;
+
+    const nextDocuments = row.documents.map((doc) =>
+      doc.file_path === filePath
+        ? { ...doc, is_client_visible: isClientVisible }
+        : doc,
+    );
+
+    const updatedRow = {
+      ...row,
+      documents: nextDocuments,
+    };
+
+    setStageFilesState((prev) => ({
+      ...prev,
+      [stageKey]: updatedRow,
+    }));
+
+    saveStageFileRowMutation.mutate({
+      ...updatedRow,
+      entered_at: updatedRow.entered_at || new Date().toISOString(),
+    });
   };
 
   const formatDateTime = (value: string | null) => {
@@ -1791,6 +1823,21 @@ const AdminProjectDetail = () => {
                                   {doc.file_name}
                                 </span>
                               </button>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground">
+                                  Client
+                                </span>
+                                <Switch
+                                  checked={doc.is_client_visible ?? true}
+                                  onCheckedChange={(checked) =>
+                                    updateStageFileVisibility(
+                                      stage.key,
+                                      doc.file_path,
+                                      checked,
+                                    )
+                                  }
+                                />
+                              </div>
                               <span className="text-muted-foreground whitespace-nowrap">
                                 {(doc.file_size / 1024).toFixed(0)} KB
                               </span>

@@ -26,12 +26,39 @@ interface CustomerDocument {
   updated_at: string;
   document_type: string | null;
   category: string | null;
+  is_client_visible?: boolean | null;
   projects: {
     id: string;
     name: string;
     stage: string;
+    is_client_portal_active?: boolean | null;
+    show_documents_to_client?: boolean | null;
   } | null;
 }
+
+type StageFileDocument = {
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_at: string;
+  is_client_visible?: boolean | null;
+};
+
+type StageFileRow = {
+  id: string;
+  project_id: string;
+  stage_key: string;
+  stage_name: string;
+  documents: StageFileDocument[];
+  projects: {
+    id: string;
+    name: string;
+    stage: string;
+    is_client_portal_active?: boolean | null;
+    show_documents_to_client?: boolean | null;
+  } | null;
+};
 
 const qaReadyStages = new Set(['qa_passed', 'commissioned', 'closeout_delivered']);
 
@@ -49,7 +76,7 @@ const CustomerDocuments = () => {
         .from('documents')
         .select(`
           *,
-          projects(id, name, stage)
+          projects(id, name, stage, is_client_portal_active, show_documents_to_client)
         `)
         .order('updated_at', { ascending: false });
 
@@ -60,7 +87,46 @@ const CustomerDocuments = () => {
     enabled: !!user,
   });
 
+  const { data: stageFiles = [], isLoading: stageFilesLoading } = useQuery({
+    queryKey: ['customer-stage-files', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_stage_files')
+        .select('*, projects(id, name, stage, is_client_portal_active, show_documents_to_client)')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data as unknown as StageFileRow[];
+    },
+    enabled: !!user,
+  });
+
   const normalizedSearch = search.trim().toLowerCase();
+
+  const isVisibleToClient = (doc: CustomerDocument) => {
+    const portalActive = doc.projects?.is_client_portal_active ?? true;
+    const docsEnabled = doc.projects?.show_documents_to_client ?? true;
+    const docVisible = doc.is_client_visible ?? true;
+    return portalActive && docsEnabled && docVisible;
+  };
+
+  const visibleDocuments = documents.filter(isVisibleToClient);
+
+  const stageFileDocuments = stageFiles.flatMap((row) =>
+    (row.documents || []).map((doc) => ({
+      ...doc,
+      project: row.projects,
+      stage_name: row.stage_name,
+    })),
+  );
+
+  const visibleStageFiles = stageFileDocuments.filter((doc) => {
+    const portalActive = doc.project?.is_client_portal_active ?? true;
+    const docsEnabled = doc.project?.show_documents_to_client ?? true;
+    const docVisible = doc.is_client_visible ?? true;
+    return portalActive && docsEnabled && docVisible;
+  });
 
   const matchesSearch = (doc: CustomerDocument) => {
     if (!normalizedSearch) return true;
@@ -73,20 +139,34 @@ const CustomerDocuments = () => {
     );
   };
 
+  const matchesStageFileSearch = (doc: {
+    file_name: string;
+    stage_name?: string;
+    project?: { name?: string | null } | null;
+  }) => {
+    if (!normalizedSearch) return true;
+
+    return (
+      doc.file_name.toLowerCase().includes(normalizedSearch) ||
+      doc.stage_name?.toLowerCase().includes(normalizedSearch) ||
+      doc.project?.name?.toLowerCase().includes(normalizedSearch)
+    );
+  };
+
   const isPostQaProject = (doc: CustomerDocument) => {
     const stage = doc.projects?.stage;
     return !!stage && qaReadyStages.has(stage);
   };
 
-  const approvedDocuments = documents.filter(
+  const approvedDocuments = visibleDocuments.filter(
     doc => doc.state === 'afc' && doc.document_type !== 'report' && matchesSearch(doc),
   );
 
-  const asBuiltDrawings = documents.filter(
+  const asBuiltDrawings = visibleDocuments.filter(
     doc => doc.state === 'as_built' && doc.document_type === 'drawing' && matchesSearch(doc),
   );
 
-  const testReports = documents.filter(
+  const testReports = visibleDocuments.filter(
     doc =>
       doc.document_type === 'report' &&
       (doc.state === 'afc' || doc.state === 'as_built') &&
@@ -94,9 +174,26 @@ const CustomerDocuments = () => {
       matchesSearch(doc),
   );
 
+  const filteredStageFiles = visibleStageFiles.filter(matchesStageFileSearch);
+
   const openVersionHistory = (doc: CustomerDocument) => {
     setSelectedDoc(doc);
     setVersionHistoryOpen(true);
+  };
+
+  const downloadStageFile = async (doc: { file_path: string; file_name: string }) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('project-documents')
+        .createSignedUrl(doc.file_path, 3600);
+
+      if (error || !data?.signedUrl) throw error;
+
+      window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast({ title: 'Download failed', description: errorMessage, variant: 'destructive' });
+    }
   };
 
   const downloadDocument = async (doc: CustomerDocument) => {
@@ -220,7 +317,9 @@ const CustomerDocuments = () => {
     );
   };
 
-  if (isLoading) return <LoadingSpinner text="Loading document access..." />;
+  if (isLoading || stageFilesLoading) {
+    return <LoadingSpinner text="Loading document access..." />;
+  }
 
   return (
     <div className="space-y-6 animate-slide-in">
@@ -287,6 +386,73 @@ const CustomerDocuments = () => {
           {renderDocumentTable(
             approvedDocuments,
             'No approved documents are currently available.',
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle>Stage Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredStageFiles.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No stage documents available"
+              description="Stage uploads will appear here when shared with clients."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>File</TableHead>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Stage</TableHead>
+                  <TableHead>Uploaded</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStageFiles.map((doc) => (
+                  <TableRow key={doc.file_path}>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <p className="font-medium">{doc.file_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(doc.file_size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{doc.project?.name || '—'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {doc.stage_name || 'stage'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            downloadStageFile({
+                              file_path: doc.file_path,
+                              file_name: doc.file_name,
+                            })
+                          }
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>

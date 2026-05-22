@@ -59,7 +59,7 @@ const ClientDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("*, projects(name)")
+        .select("*, projects(id, name, is_client_portal_active, show_documents_to_client)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -104,14 +104,21 @@ const ClientDashboard = () => {
   const activeCount = projects.filter(
     (project) => project.stage !== "closeout_delivered",
   ).length;
-  const afcDocs = documents.filter(
+  const visibleDocuments = documents.filter((document) => {
+    const portalActive = document.projects?.is_client_portal_active ?? true;
+    const docsEnabled = document.projects?.show_documents_to_client ?? true;
+    const docVisible = document.is_client_visible ?? true;
+    return portalActive && docsEnabled && docVisible;
+  });
+
+  const afcDocs = visibleDocuments.filter(
     (document) => document.state === "afc",
   ).length;
-  const asBuiltDocs = documents.filter(
+  const asBuiltDocs = visibleDocuments.filter(
     (document) => document.state === "as_built",
   ).length;
 
-  const docsInReview = documents.filter(
+  const docsInReview = visibleDocuments.filter(
     (document) => document.state === "in_review",
   ).length;
 
@@ -175,7 +182,11 @@ const ClientDashboard = () => {
           .eq("user_id", project.client_id)
           .single(),
         supabase.from("sites").select("*").eq("id", project.site_id).single(),
-        supabase.from("documents").select("*").eq("project_id", project.id),
+        supabase
+          .from("documents")
+          .select("*")
+          .eq("project_id", project.id)
+          .eq("is_client_visible", true),
         supabase.from("milestones").select("*").eq("project_id", project.id),
       ]);
 
@@ -359,6 +370,9 @@ const ClientDashboard = () => {
           const projectDocs = documents.filter(
             (document) => document.project_id === project.id,
           );
+          const visibleProjectDocs = projectDocs.filter(
+            (document) => document.is_client_visible ?? true,
+          );
           const projectMilestones = milestones.filter(
             (milestone) => milestone.project_id === project.id,
           );
@@ -460,13 +474,13 @@ const ClientDashboard = () => {
                   </div>
                 )}
 
-                {project.show_documents_to_client && projectDocs.length > 0 && (
+                {project.show_documents_to_client && visibleProjectDocs.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-sm mb-3">
                       Document Status
                     </h4>
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {projectDocs.map((document) => (
+                      {visibleProjectDocs.map((document) => (
                         <div
                           key={document.id}
                           className="rounded-lg border border-border/60 bg-muted/40 p-3"
