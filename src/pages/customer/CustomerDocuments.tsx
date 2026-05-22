@@ -175,6 +175,7 @@ const CustomerDocuments = () => {
   );
 
   const filteredStageFiles = visibleStageFiles.filter(matchesStageFileSearch);
+  const stageFilesCount = visibleStageFiles.length;
 
   const openVersionHistory = (doc: CustomerDocument) => {
     setSelectedDoc(doc);
@@ -342,7 +343,7 @@ const CustomerDocuments = () => {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card className="border-border/50">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -372,6 +373,17 @@ const CustomerDocuments = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Post-QA Test Reports</p>
                 <p className="text-2xl font-bold">{testReports.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Stage Uploads</p>
+                <p className="text-2xl font-bold">{stageFilesCount}</p>
               </div>
             </div>
           </CardContent>
