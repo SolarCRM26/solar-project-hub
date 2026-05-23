@@ -17,9 +17,29 @@ import {
   CheckCircle2,
   Package,
   AlertTriangle,
-  Clock3,
   Camera,
 } from "lucide-react";
+
+type StageFileDocument = {
+  file_path: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_at: string;
+  is_client_visible?: boolean | null;
+};
+
+type StageFileRow = {
+  project_id: string;
+  stage_name: string;
+  documents: StageFileDocument[];
+  projects: {
+    id: string;
+    name: string;
+    is_client_portal_active?: boolean | null;
+    show_documents_to_client?: boolean | null;
+  } | null;
+};
 
 const stageOrder = [
   "lead_created",
@@ -59,7 +79,7 @@ const ClientDashboard = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("documents")
-        .select("*, projects(name)")
+        .select("*, projects(id, name, is_client_portal_active, show_documents_to_client)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -98,28 +118,65 @@ const ClientDashboard = () => {
     enabled: projects.length > 0,
   });
 
+  const { data: checklistRuns = [] } = useQuery({
+    queryKey: ["client-checklist-runs", user?.id, projects.length],
+    queryFn: async () => {
+      const projectIds = projects.map((p) => p.id);
+      if (projectIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("checklist_runs")
+        .select("project_id, updated_at, status")
+        .in("project_id", projectIds)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data as { project_id: string; updated_at: string; status: string }[];
+    },
+    enabled: projects.length > 0,
+  });
+
+  const { data: stageFiles = [] } = useQuery({
+    queryKey: ["client-stage-files", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("project_stage_files")
+        .select("*, projects(id, name, is_client_portal_active, show_documents_to_client)")
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data as unknown as StageFileRow[];
+    },
+    enabled: !!user,
+  });
+
   const deliveredCount = projects.filter(
     (project) => project.stage === "closeout_delivered",
   ).length;
   const activeCount = projects.filter(
     (project) => project.stage !== "closeout_delivered",
   ).length;
-  const afcDocs = documents.filter(
+  const visibleDocuments = documents.filter((document) => {
+    const portalActive = document.projects?.is_client_portal_active ?? true;
+    const docsEnabled = document.projects?.show_documents_to_client ?? true;
+    const docVisible = document.is_client_visible ?? true;
+    return portalActive && docsEnabled && docVisible;
+  });
+
+  const afcDocs = visibleDocuments.filter(
     (document) => document.state === "afc",
   ).length;
-  const asBuiltDocs = documents.filter(
+  const asBuiltDocs = visibleDocuments.filter(
     (document) => document.state === "as_built",
   ).length;
 
-  const docsInReview = documents.filter(
-    (document) => document.state === "in_review",
-  ).length;
+  const visibleMilestones = milestones.filter((milestone) => {
+    const project = projects.find((p) => p.id === milestone.project_id);
+    return project?.show_milestones_to_client ?? false;
+  });
 
-  const completedMilestones = milestones.filter(
+  const completedMilestones = visibleMilestones.filter(
     (milestone) => !!milestone.completed_at,
   ).length;
-  const milestoneCompletionPct = milestones.length
-    ? Math.round((completedMilestones / milestones.length) * 100)
+  const milestoneCompletionPct = visibleMilestones.length
+    ? Math.round((completedMilestones / visibleMilestones.length) * 100)
     : 0;
 
   const scheduleRiskProjects = projects.filter((project) => {
@@ -132,24 +189,67 @@ const ClientDashboard = () => {
     );
   }).length;
 
+  const stageFileDocuments = stageFiles.flatMap((row) =>
+    (row.documents || []).map((doc) => ({
+      ...doc,
+      project_id: row.project_id,
+      project: row.projects,
+    })),
+  );
+
+  const visibleStageFiles = stageFileDocuments.filter((doc) => {
+    const portalActive = doc.project?.is_client_portal_active ?? true;
+    const docsEnabled = doc.project?.show_documents_to_client ?? true;
+    const docVisible = doc.is_client_visible ?? true;
+    return portalActive && docsEnabled && docVisible;
+  });
+
+  const projectPhotoAccess = new Set(
+    projects.filter((p) => p.show_photos_to_client).map((p) => p.id),
+  );
+  const visiblePhotos = photos.filter((photo) =>
+    projectPhotoAccess.has(photo.project_id),
+  );
+
   const getProjectLastUpdate = (projectId: string) => {
-    const docUpdates = documents
+    const docUpdates = visibleDocuments
       .filter((document) => document.project_id === projectId)
       .map((document) =>
         new Date(document.updated_at || document.created_at).getTime(),
       )
       .filter((time) => Number.isFinite(time));
 
-    const milestoneUpdates = milestones
+    const milestoneUpdates = visibleMilestones
       .filter((milestone) => milestone.project_id === projectId)
       .map((milestone: any) =>
         new Date(milestone.updated_at || milestone.created_at).getTime(),
       )
       .filter((time) => Number.isFinite(time));
 
-    const allUpdates = [...docUpdates, ...milestoneUpdates];
+    const stageFileUpdates = visibleStageFiles
+      .filter((doc) => doc.project_id === projectId)
+      .map((doc) => new Date(doc.uploaded_at).getTime())
+      .filter((time) => Number.isFinite(time));
+
+    const photoUpdates = visiblePhotos
+      .filter((photo) => photo.project_id === projectId)
+      .map((photo) => new Date(photo.created_at).getTime())
+      .filter((time) => Number.isFinite(time));
+
+    const allUpdates = [
+      ...docUpdates,
+      ...milestoneUpdates,
+      ...stageFileUpdates,
+      ...photoUpdates,
+    ];
     if (allUpdates.length === 0) return null;
     return Math.max(...allUpdates);
+  };
+
+  const getInstallationActivity = (projectId: string) => {
+    const run = checklistRuns.find((item) => item.project_id === projectId);
+    if (!run?.updated_at) return null;
+    return new Date(run.updated_at).toLocaleDateString();
   };
 
   const getSlaStatus = (projectId: string) => {
@@ -175,7 +275,11 @@ const ClientDashboard = () => {
           .eq("user_id", project.client_id)
           .single(),
         supabase.from("sites").select("*").eq("id", project.site_id).single(),
-        supabase.from("documents").select("*").eq("project_id", project.id),
+        supabase
+          .from("documents")
+          .select("*")
+          .eq("project_id", project.id)
+          .eq("is_client_visible", true),
         supabase.from("milestones").select("*").eq("project_id", project.id),
       ]);
 
@@ -261,10 +365,10 @@ const ClientDashboard = () => {
           description="Approved for construction"
         />
         <StatsCard
-          title="SLA Review Queue"
-          value={docsInReview}
-          icon={Clock3}
-          description="Documents under review"
+          title="Shared Files"
+          value={visibleDocuments.length + visibleStageFiles.length}
+          icon={FileText}
+          description="Client-visible documents & uploads"
         />
       </div>
 
@@ -356,7 +460,7 @@ const ClientDashboard = () => {
           const stageIndex = stageOrder.indexOf(project.stage);
           const progress =
             ((Math.max(stageIndex, 0) + 1) / stageOrder.length) * 100;
-          const projectDocs = documents.filter(
+          const visibleProjectDocs = visibleDocuments.filter(
             (document) => document.project_id === project.id,
           );
           const projectMilestones = milestones.filter(
@@ -460,13 +564,13 @@ const ClientDashboard = () => {
                   </div>
                 )}
 
-                {project.show_documents_to_client && projectDocs.length > 0 && (
+                {project.show_documents_to_client && visibleProjectDocs.length > 0 && (
                   <div>
                     <h4 className="font-semibold text-sm mb-3">
                       Document Status
                     </h4>
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {projectDocs.map((document) => (
+                      {visibleProjectDocs.map((document) => (
                         <div
                           key={document.id}
                           className="rounded-lg border border-border/60 bg-muted/40 p-3"
@@ -517,6 +621,11 @@ const ClientDashboard = () => {
                         <Camera className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
                         <p className="text-xs text-muted-foreground">
                           Photo documentation will appear here as installation progresses
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {getInstallationActivity(project.id)
+                            ? `Last installation activity: ${getInstallationActivity(project.id)}`
+                            : "No installation activity logged yet"}
                         </p>
                       </div>
                     )}

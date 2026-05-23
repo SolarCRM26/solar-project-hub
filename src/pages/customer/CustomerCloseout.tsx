@@ -26,6 +26,8 @@ interface CustomerProject {
   estimated_cost: number | null;
   client_id: string | null;
   site_id: string | null;
+  is_client_portal_active?: boolean | null;
+  show_documents_to_client?: boolean | null;
 }
 
 interface CustomerDocument {
@@ -38,9 +40,12 @@ interface CustomerDocument {
   updated_at: string;
   document_type: string | null;
   category: string | null;
+  is_client_visible?: boolean | null;
   projects: {
     id: string;
     name: string;
+    is_client_portal_active?: boolean | null;
+    show_documents_to_client?: boolean | null;
   } | null;
 }
 
@@ -60,7 +65,7 @@ const CustomerCloseout = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, stage, project_type, capacity_kw, start_date, target_completion, estimated_cost, client_id, site_id')
+        .select('id, name, stage, project_type, capacity_kw, start_date, target_completion, estimated_cost, client_id, site_id, is_client_portal_active, show_documents_to_client')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -75,7 +80,7 @@ const CustomerCloseout = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('documents')
-        .select('*, projects(id, name)')
+        .select('*, projects(id, name, is_client_portal_active, show_documents_to_client)')
         .order('updated_at', { ascending: false });
 
       if (error) throw error;
@@ -85,9 +90,21 @@ const CustomerCloseout = () => {
     enabled: !!user,
   });
 
-  const closeoutProjects = projects.filter(project => project.stage === 'closeout_delivered');
+  const closeoutProjects = projects.filter(
+    project =>
+      project.stage === 'closeout_delivered' &&
+      (project.is_client_portal_active ?? true) &&
+      (project.show_documents_to_client ?? true),
+  );
 
   const normalizedSearch = search.trim().toLowerCase();
+
+  const isVisibleToClient = (doc: CustomerDocument) => {
+    const portalActive = doc.projects?.is_client_portal_active ?? true;
+    const docsEnabled = doc.projects?.show_documents_to_client ?? true;
+    const docVisible = doc.is_client_visible ?? true;
+    return portalActive && docsEnabled && docVisible;
+  };
 
   const warrantyDocuments = documents.filter(doc => {
     const hasWarrantyMarker =
@@ -101,6 +118,7 @@ const CustomerCloseout = () => {
       (doc.projects?.name?.toLowerCase().includes(normalizedSearch) ?? false);
 
     return (
+      isVisibleToClient(doc) &&
       (doc.state === 'afc' || doc.state === 'as_built') &&
       (doc.category === 'closeout' || hasWarrantyMarker) &&
       matchesSearch
@@ -174,7 +192,11 @@ const CustomerCloseout = () => {
         project.site_id
           ? supabase.from('sites').select('*').eq('id', project.site_id).single()
           : Promise.resolve({ data: null, error: null }),
-        supabase.from('documents').select('*').eq('project_id', project.id),
+        supabase
+          .from('documents')
+          .select('*')
+          .eq('project_id', project.id)
+          .eq('is_client_visible', true),
         supabase.from('milestones').select('*').eq('project_id', project.id),
       ]);
 

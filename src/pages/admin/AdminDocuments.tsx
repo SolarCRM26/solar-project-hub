@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { DocStateBadge } from '@/components/StatusBadges';
 import { Plus, FileText, Search, Upload, Download, History, Edit, CheckCircle2, Eye, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -39,14 +40,16 @@ const AdminDocuments = () => {
     project_id: '', 
     state: 'draft' as string,
     document_type: 'drawing',
-    category: 'design'
+    category: 'design',
+    is_client_visible: true,
   });
 
   const [editForm, setEditForm] = useState({
     name: '',
     description: '',
     document_type: '',
-    category: ''
+    category: '',
+    is_client_visible: true,
   });
 
   const [newState, setNewState] = useState('');
@@ -81,6 +84,7 @@ const AdminDocuments = () => {
         state: form.state as any,
         document_type: form.document_type,
         category: form.category,
+        is_client_visible: form.is_client_visible,
         uploaded_by: user?.id,
       });
       if (error) throw error;
@@ -88,7 +92,7 @@ const AdminDocuments = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       setOpen(false);
-      setForm({ name: '', description: '', project_id: '', state: 'draft', document_type: 'drawing', category: 'design' });
+      setForm({ name: '', description: '', project_id: '', state: 'draft', document_type: 'drawing', category: 'design', is_client_visible: true });
       toast({ title: 'Document created successfully' });
     },
     onError: (e: any) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
@@ -103,6 +107,7 @@ const AdminDocuments = () => {
           description: editForm.description,
           document_type: editForm.document_type,
           category: editForm.category,
+          is_client_visible: editForm.is_client_visible,
         })
         .eq('id', selectedDoc.id);
       if (error) throw error;
@@ -160,9 +165,25 @@ const AdminDocuments = () => {
       description: doc.description || '',
       document_type: doc.document_type || 'drawing',
       category: doc.category || 'design',
+      is_client_visible: doc.is_client_visible ?? true,
     });
     setEditDialogOpen(true);
   };
+
+  const updateVisibility = useMutation({
+    mutationFn: async ({ id, isClientVisible }: { id: string; isClientVisible: boolean }) => {
+      const { error } = await supabase
+        .from('documents')
+        .update({ is_client_visible: isClientVisible })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    },
+    onError: (e: any) =>
+      toast({ title: 'Visibility update failed', description: e.message, variant: 'destructive' }),
+  });
 
   const openStateDialog = (doc: any) => {
     setSelectedDoc(doc);
@@ -296,6 +317,20 @@ const AdminDocuments = () => {
                   </Select>
                 </div>
               </div>
+              <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                <div>
+                  <Label className="text-sm font-medium">Client Visible</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Allow clients to see this document when portal access is enabled
+                  </p>
+                </div>
+                <Switch
+                  checked={form.is_client_visible}
+                  onCheckedChange={(checked) =>
+                    setForm((f) => ({ ...f, is_client_visible: checked }))
+                  }
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Project *</Label>
                 <Select value={form.project_id} onValueChange={v => setForm(f => ({ ...f, project_id: v }))}>
@@ -357,6 +392,7 @@ const AdminDocuments = () => {
                 <TableHead>Type</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>State</TableHead>
+                <TableHead>Client Visible</TableHead>
                 <TableHead>Version</TableHead>
                 <TableHead>Updated</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -365,7 +401,7 @@ const AdminDocuments = () => {
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8}>
+                  <TableCell colSpan={9}>
                     <EmptyState 
                       icon={FileText}
                       title="No documents found"
@@ -399,6 +435,15 @@ const AdminDocuments = () => {
                       </Badge>
                     </TableCell>
                     <TableCell><DocStateBadge state={doc.state} /></TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={doc.is_client_visible ?? true}
+                        onCheckedChange={(checked) =>
+                          updateVisibility.mutate({ id: doc.id, isClientVisible: checked })
+                        }
+                        aria-label="Toggle client visibility"
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-sm">v{doc.current_version}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(doc.updated_at).toLocaleDateString()}
@@ -546,6 +591,20 @@ const AdminDocuments = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+              <div>
+                <Label className="text-sm font-medium">Client Visible</Label>
+                <p className="text-xs text-muted-foreground">
+                  Allow clients to see this document when portal access is enabled
+                </p>
+              </div>
+              <Switch
+                checked={editForm.is_client_visible}
+                onCheckedChange={(checked) =>
+                  setEditForm((f) => ({ ...f, is_client_visible: checked }))
+                }
+              />
             </div>
             <Button type="submit" className="w-full" disabled={updateDoc.isPending}>
               {updateDoc.isPending ? 'Saving...' : 'Save Changes'}
