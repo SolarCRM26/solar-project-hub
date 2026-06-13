@@ -49,7 +49,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StageBadge, stageLabels } from "@/components/StatusBadges";
+import { StageBadge, stageLabels, DocStateBadge } from "@/components/StatusBadges";
 import {
   Eye,
   EyeOff,
@@ -69,10 +69,19 @@ import {
   CircleCheck,
   Layers,
   Camera,
+  Plus,
+  Search,
+  Download,
+  History,
+  Edit,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { DocumentUploader } from "@/components/DocumentUploader";
+import { DocumentVersionHistory } from "@/components/DocumentVersionHistory";
 
 const projectTypes = [
   { value: "rooftop", label: "Rooftop" },
@@ -419,6 +428,219 @@ const AdminProjectDetail = () => {
     user_id: "",
     role: "engineering",
   });
+
+  const [docDialogOpen, setDocDialogOpen] = useState(false);
+  const [docUploadDialogOpen, setDocUploadDialogOpen] = useState(false);
+  const [docVersionHistoryOpen, setDocVersionHistoryOpen] = useState(false);
+  const [docEditDialogOpen, setDocEditDialogOpen] = useState(false);
+  const [docStateDialogOpen, setDocStateDialogOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [docSearch, setDocSearch] = useState("");
+  const [docStateFilter, setDocStateFilter] = useState("all");
+  const [newDocState, setNewDocState] = useState("");
+
+  const [docForm, setDocForm] = useState({
+    name: "",
+    description: "",
+    state: "draft",
+    document_type: "drawing",
+    category: "design",
+    is_client_visible: true,
+  });
+
+  const [docEditForm, setDocEditForm] = useState({
+    name: "",
+    description: "",
+    document_type: "",
+    category: "",
+    is_client_visible: true,
+  });
+
+  const { data: projectDocuments = [], isLoading: isDocsLoading } = useQuery({
+    queryKey: ["project-documents", id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("project_id", id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
+  const createDocMutation = useMutation({
+    mutationFn: async () => {
+      if (!id || !user?.id) return;
+      const { error } = await supabase.from("documents").insert({
+        name: docForm.name,
+        description: docForm.description || null,
+        project_id: id,
+        state: docForm.state as any,
+        document_type: docForm.document_type,
+        category: docForm.category,
+        is_client_visible: docForm.is_client_visible,
+        uploaded_by: user.id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-documents", id] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      setDocDialogOpen(false);
+      setDocForm({
+        name: "",
+        description: "",
+        state: "draft",
+        document_type: "drawing",
+        category: "design",
+        is_client_visible: true,
+      });
+      toast({ title: "Document created successfully" });
+    },
+    onError: (e: any) =>
+      toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const updateDocMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDoc) return;
+      const { error } = await supabase
+        .from("documents")
+        .update({
+          name: docEditForm.name,
+          description: docEditForm.description,
+          document_type: docEditForm.document_type,
+          category: docEditForm.category,
+          is_client_visible: docEditForm.is_client_visible,
+        })
+        .eq("id", selectedDoc.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-documents", id] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      setDocEditDialogOpen(false);
+      toast({ title: "Document updated successfully" });
+    },
+    onError: (e: any) =>
+      toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const transitionDocStateMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDoc || !user?.id) return;
+      const { error } = await supabase
+        .from("documents")
+        .update({
+          state: newDocState as any,
+          updated_at: new Date().toISOString(),
+          ...(newDocState === "afc"
+            ? {
+                approved_by: user.id,
+                approved_at: new Date().toISOString(),
+              }
+            : {}),
+          ...(newDocState === "in_review"
+            ? {
+                reviewed_by: user.id,
+                reviewed_at: new Date().toISOString(),
+              }
+            : {}),
+        })
+        .eq("id", selectedDoc.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-documents", id] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      setDocStateDialogOpen(false);
+      toast({ title: "Document state updated successfully" });
+    },
+    onError: (e: any) =>
+      toast({
+        title: "State transition failed",
+        description: e.message,
+        variant: "destructive",
+      }),
+  });
+
+  const updateDocVisibilityMutation = useMutation({
+    mutationFn: async ({
+      docId,
+      isClientVisible,
+    }: {
+      docId: string;
+      isClientVisible: boolean;
+    }) => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ is_client_visible: isClientVisible })
+        .eq("id", docId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["project-documents", id] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+    },
+    onError: (e: any) =>
+      toast({
+        title: "Visibility update failed",
+        description: e.message,
+        variant: "destructive",
+      }),
+  });
+
+  const downloadProjectDoc = async (doc: any) => {
+    try {
+      const { data: versions } = await supabase
+        .from("document_versions")
+        .select("file_path, version_number")
+        .eq("document_id", doc.id)
+        .order("version_number", { ascending: false })
+        .limit(1);
+
+      if (versions && versions.length > 0) {
+        const { data, error } = await supabase.storage
+          .from("project-documents")
+          .download(versions[0].file_path);
+
+        if (error) throw error;
+
+        try {
+          await supabase.rpc("log_document_download" as never, {
+            doc_id: doc.id,
+            version_num: versions[0].version_number,
+          } as never);
+        } catch (e) {
+          // graceful degradation
+        }
+
+        const url = URL.createObjectURL(data);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${doc.name}_v${versions[0].version_number}`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        toast({ title: "Download started" });
+      } else {
+        toast({
+          title: "No file available",
+          description: "Upload a file first",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Download failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
   const [checklistState, setChecklistState] = useState<ChecklistState>({});
   const [checklistRunId, setChecklistRunId] = useState<string | null>(null);
   const [uploadingItemId, setUploadingItemId] = useState<string | null>(null);
@@ -1736,6 +1958,7 @@ const AdminProjectDetail = () => {
           <TabsTrigger value="details">Details</TabsTrigger>
           <TabsTrigger value="team">Team ({team.length})</TabsTrigger>
           <TabsTrigger value="tasks">Tasks (0)</TabsTrigger>
+          <TabsTrigger value="documents">Project Documents</TabsTrigger>
         </TabsList>
 
 
@@ -2983,6 +3206,609 @@ const AdminProjectDetail = () => {
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="documents" className="space-y-4">
+          {(() => {
+            const filteredDocs = projectDocuments.filter((d: any) => {
+              const matchesSearch = d.name.toLowerCase().includes(docSearch.toLowerCase());
+              const matchesState = docStateFilter === "all" || d.state === docStateFilter;
+              return matchesSearch && matchesState;
+            });
+            return (
+              <div className="space-y-4">
+                <Card className="border-border/50">
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <FileText className="h-5 w-5 text-primary" /> Project Controlled Documents
+                        </CardTitle>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Manage official project drawings, reports, and specifications for client portal document access.
+                        </p>
+                      </div>
+                      <Dialog open={docDialogOpen} onOpenChange={setDocDialogOpen}>
+                        <DialogTrigger asChild>
+                          <Button size="sm">
+                            <Plus className="h-4 w-4 mr-2" /> New Document
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader>
+                            <DialogTitle>Create New Document</DialogTitle>
+                          </DialogHeader>
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              createDocMutation.mutate();
+                            }}
+                            className="space-y-4"
+                          >
+                            <div className="space-y-2">
+                              <Label>Document Name *</Label>
+                              <Input
+                                value={docForm.name}
+                                onChange={(e) =>
+                                  setDocForm((f) => ({ ...f, name: e.target.value }))
+                                }
+                                placeholder="e.g., Site Plan Drawing"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Description</Label>
+                              <Textarea
+                                value={docForm.description}
+                                onChange={(e) =>
+                                  setDocForm((f) => ({
+                                    ...f,
+                                    description: e.target.value,
+                                  }))
+                                }
+                                placeholder="Brief description of the document"
+                                rows={2}
+                              />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label>Document Type *</Label>
+                                <Select
+                                  value={docForm.document_type}
+                                  onValueChange={(v) =>
+                                    setDocForm((f) => ({ ...f, document_type: v }))
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="drawing">Drawing</SelectItem>
+                                    <SelectItem value="specification">
+                                      Specification
+                                    </SelectItem>
+                                    <SelectItem value="report">Report</SelectItem>
+                                    <SelectItem value="permit">Permit</SelectItem>
+                                    <SelectItem value="photo">Photo</SelectItem>
+                                    <SelectItem value="contract">Contract</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label>Category *</Label>
+                                <Select
+                                  value={docForm.category}
+                                  onValueChange={(v) =>
+                                    setDocForm((f) => ({ ...f, category: v }))
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="design">Design</SelectItem>
+                                    <SelectItem value="electrical">
+                                      Electrical
+                                    </SelectItem>
+                                    <SelectItem value="structural">
+                                      Structural
+                                    </SelectItem>
+                                    <SelectItem value="permitting">
+                                      Permitting
+                                    </SelectItem>
+                                    <SelectItem value="construction">
+                                      Construction
+                                    </SelectItem>
+                                    <SelectItem value="commissioning">
+                                      Commissioning
+                                    </SelectItem>
+                                    <SelectItem value="closeout">Closeout</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                              <div>
+                                <Label className="text-sm font-medium">
+                                  Client Visible
+                                </Label>
+                                <p className="text-xs text-muted-foreground text-pretty">
+                                  Allow clients to see this document. When enabled, setting the document state to "Approved for Construction (AFC)" or "As-Built" will automatically display it under the client's "Approved Documents", "As-Built Drawings", or "Test Reports" based on type.
+                                </p>
+                              </div>
+                              <Switch
+                                checked={docForm.is_client_visible}
+                                onCheckedChange={(checked) =>
+                                  setDocForm((f) => ({
+                                    ...f,
+                                    is_client_visible: checked,
+                                  }))
+                                }
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Initial State *</Label>
+                              <Select
+                                value={docForm.state}
+                                onValueChange={(v) =>
+                                  setDocForm((f) => ({ ...f, state: v }))
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="draft">Draft</SelectItem>
+                                  <SelectItem value="in_review">In Review</SelectItem>
+                                  <SelectItem value="afc">AFC</SelectItem>
+                                  <SelectItem value="as_built">As-Built</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Button
+                              type="submit"
+                              className="w-full"
+                              disabled={createDocMutation.isPending}
+                            >
+                              {createDocMutation.isPending
+                                ? "Creating..."
+                                : "Create Document"}
+                            </Button>
+                          </form>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    {/* Informational Guidance Subtext Card */}
+                    <div className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-800 rounded-xl">
+                      <div className="flex gap-3">
+                        <AlertCircle className="h-5 w-5 text-indigo-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs space-y-1">
+                          <p className="font-semibold text-slate-800 dark:text-slate-200">
+                            Client Portal Document Mapping Rules (Real-time Synced)
+                          </p>
+                          <p className="text-muted-foreground">
+                            Uploading documents here will automatically publish them to the client's portal under specific sections if **Client Visible** is toggled ON:
+                          </p>
+                          <ul className="list-disc pl-4 text-muted-foreground space-y-1 mt-1 font-medium">
+                            <li>
+                              <strong>Approved Documents</strong>: Document state set to <Badge variant="outline" className="text-[10px] py-0 px-1">AFC</Badge> (Approved for Construction), Type is NOT "Report".
+                            </li>
+                            <li>
+                              <strong>As-Built Drawings</strong>: Document state set to <Badge variant="outline" className="text-[10px] py-0 px-1 font-mono">As-Built</Badge>, Type is set to "Drawing".
+                            </li>
+                            <li>
+                              <strong>Test Reports (Post-QA)</strong>: Document Type set to "Report", State set to either <Badge variant="outline" className="text-[10px] py-0 px-1">AFC</Badge> or <Badge variant="outline" className="text-[10px] py-0 px-1">As-Built</Badge> (visible once the project progresses to the Procurement / Installation stages).
+                            </li>
+                            <li>
+                              <strong>Warranty Documents</strong>: Category set to <Badge variant="outline" className="text-[10px] py-0 px-1">Closeout</Badge> OR the document name/description/category contains the word <span className="font-mono text-[10px] bg-slate-200 dark:bg-slate-800 px-1 rounded">"warranty"</span>, state set to <Badge variant="outline" className="text-[10px] py-0 px-1">AFC</Badge> or <Badge variant="outline" className="text-[10px] py-0 px-1">As-Built</Badge>.
+                            </li>
+                            <li>
+                              <strong>Closeout Package Access</strong>: Automatically compiled details (Asset Summary & Final compiled PDF) become accessible on the customer closeout tab when the project stage is updated to <Badge variant="outline" className="text-[10px] py-0 px-1">Closeout Delivered</Badge>.
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Filters & Search */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search project documents..."
+                          value={docSearch}
+                          onChange={(e) => setDocSearch(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                      <Select value={docStateFilter} onValueChange={setDocStateFilter}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All States</SelectItem>
+                          <SelectItem value="draft">Draft</SelectItem>
+                          <SelectItem value="in_review">In Review</SelectItem>
+                          <SelectItem value="afc">AFC</SelectItem>
+                          <SelectItem value="as_built">As-Built</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Documents List */}
+                    {isDocsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : filteredDocs.length === 0 ? (
+                      <div className="py-8 text-center border border-dashed border-border/60 rounded-xl bg-muted/10">
+                        <FileText className="h-10 w-10 mx-auto text-muted-foreground/35 mb-2" />
+                        <p className="text-sm font-medium">No controlled documents found</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Upload your first drawing, report, or contract to start publishing.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-lg border border-border/50">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Document</TableHead>
+                              <TableHead>Type</TableHead>
+                              <TableHead>Category</TableHead>
+                              <TableHead>State</TableHead>
+                              <TableHead>Client Visible</TableHead>
+                              <TableHead>Version</TableHead>
+                              <TableHead>Updated</TableHead>
+                              <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {filteredDocs.map((doc: any) => (
+                              <TableRow key={doc.id}>
+                                <TableCell>
+                                  <div className="space-y-1">
+                                    <span className="font-semibold text-sm">{doc.name}</span>
+                                    {doc.description && (
+                                      <p className="text-xs text-muted-foreground line-clamp-1">
+                                        {doc.description}
+                                      </p>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-[10px] capitalize">
+                                    {doc.document_type || "unknown"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant="outline" className="text-[10px] capitalize">
+                                    {doc.category || "unknown"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <DocStateBadge state={doc.state} />
+                                </TableCell>
+                                <TableCell>
+                                  <Switch
+                                    checked={doc.is_client_visible ?? true}
+                                    onCheckedChange={(checked) =>
+                                      updateDocVisibilityMutation.mutate({
+                                        docId: doc.id,
+                                        isClientVisible: checked,
+                                      })
+                                    }
+                                  />
+                                </TableCell>
+                                <TableCell className="font-mono text-xs">v{doc.current_version}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">
+                                  {new Date(doc.updated_at).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center justify-end gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedDoc(doc);
+                                        setDocVersionHistoryOpen(true);
+                                      }}
+                                      title="Version History"
+                                    >
+                                      <History className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedDoc(doc);
+                                        setDocUploadDialogOpen(true);
+                                      }}
+                                      title="Upload New Version"
+                                    >
+                                      <Upload className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => downloadProjectDoc(doc)}
+                                      title="Download Latest"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedDoc(doc);
+                                        setDocEditForm({
+                                          name: doc.name,
+                                          description: doc.description || "",
+                                          document_type: doc.document_type || "drawing",
+                                          category: doc.category || "design",
+                                          is_client_visible: doc.is_client_visible ?? true,
+                                        });
+                                        setDocEditDialogOpen(true);
+                                      }}
+                                      title="Edit Details"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedDoc(doc);
+                                        setNewDocState(doc.state);
+                                        setDocStateDialogOpen(true);
+                                      }}
+                                      title="Change State"
+                                    >
+                                      <CheckCircle2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Upload Dialog */}
+                <Dialog open={docUploadDialogOpen} onOpenChange={setDocUploadDialogOpen}>
+                  <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle>Upload New Version</DialogTitle>
+                    </DialogHeader>
+                    {selectedDoc && (
+                      <DocumentUploader
+                        projectId={selectedDoc.project_id}
+                        documentId={selectedDoc.id}
+                        documentName={selectedDoc.name}
+                        documentState={selectedDoc.state}
+                        onSuccess={() => {
+                          queryClient.invalidateQueries({
+                            queryKey: ["project-documents", id],
+                          });
+                          queryClient.invalidateQueries({ queryKey: ["documents"] });
+                          setDocUploadDialogOpen(false);
+                          setSelectedDoc(null);
+                        }}
+                      />
+                    )}
+                  </DialogContent>
+                </Dialog>
+
+                {/* Version History Dialog */}
+                <Dialog open={docVersionHistoryOpen} onOpenChange={setDocVersionHistoryOpen}>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>{selectedDoc?.name}</DialogTitle>
+                    </DialogHeader>
+                    {selectedDoc && (
+                      <DocumentVersionHistory
+                        documentId={selectedDoc.id}
+                        documentName={selectedDoc.name}
+                      />
+                    )}
+                  </DialogContent>
+                </Dialog>
+
+                {/* Edit Dialog */}
+                <Dialog open={docEditDialogOpen} onOpenChange={setDocEditDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Document Details</DialogTitle>
+                    </DialogHeader>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        updateDocMutation.mutate();
+                      }}
+                      className="space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <Label>Document Name</Label>
+                        <Input
+                          value={docEditForm.name}
+                          onChange={(e) =>
+                            setDocEditForm((f) => ({ ...f, name: e.target.value }))
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Description</Label>
+                        <Textarea
+                          value={docEditForm.description}
+                          onChange={(e) =>
+                            setDocEditForm((f) => ({
+                              ...f,
+                              description: e.target.value,
+                            }))
+                          }
+                          rows={2}
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Document Type</Label>
+                          <Select
+                            value={docEditForm.document_type}
+                            onValueChange={(v) =>
+                              setDocEditForm((f) => ({ ...f, document_type: v }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="drawing">Drawing</SelectItem>
+                              <SelectItem value="specification">
+                                Specification
+                              </SelectItem>
+                              <SelectItem value="report">Report</SelectItem>
+                              <SelectItem value="permit">Permit</SelectItem>
+                              <SelectItem value="photo">Photo</SelectItem>
+                              <SelectItem value="contract">Contract</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Category</Label>
+                          <Select
+                            value={docEditForm.category}
+                            onValueChange={(v) =>
+                              setDocEditForm((f) => ({ ...f, category: v }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="design">Design</SelectItem>
+                              <SelectItem value="electrical">Electrical</SelectItem>
+                              <SelectItem value="structural">Structural</SelectItem>
+                              <SelectItem value="permitting">Permitting</SelectItem>
+                              <SelectItem value="construction">Construction</SelectItem>
+                              <SelectItem value="commissioning">
+                                Commissioning
+                              </SelectItem>
+                              <SelectItem value="closeout">Closeout</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
+                        <div>
+                          <Label className="text-sm font-medium">Client Visible</Label>
+                          <p className="text-xs text-muted-foreground text-pretty">
+                            Allow clients to see this document. When enabled, setting the document state to "Approved for Construction (AFC)" or "As-Built" will automatically display it under the client's "Approved Documents", "As-Built Drawings", or "Test Reports" based on type.
+                          </p>
+                        </div>
+                        <Switch
+                          checked={docEditForm.is_client_visible}
+                          onCheckedChange={(checked) =>
+                            setDocEditForm((f) => ({
+                              ...f,
+                              is_client_visible: checked,
+                            }))
+                          }
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={updateDocMutation.isPending}
+                      >
+                        {updateDocMutation.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                {/* State Transition Dialog */}
+                <Dialog open={docStateDialogOpen} onOpenChange={setDocStateDialogOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Change Document State</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="p-3 bg-muted rounded-lg text-sm">
+                        <p className="font-medium">Document: {selectedDoc?.name}</p>
+                        <p className="text-muted-foreground mt-1 flex items-center gap-1.5">
+                          Current state: <DocStateBadge state={selectedDoc?.state} />
+                        </p>
+                      </div>
+
+                      <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/50 rounded-lg">
+                        <div className="flex gap-2.5">
+                          <AlertCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
+                          <div className="text-xs">
+                            <p className="font-semibold text-indigo-700 dark:text-indigo-300">
+                              Document State Workflow
+                            </p>
+                            <ul className="mt-1 text-muted-foreground space-y-1">
+                              <li>
+                                • <strong>Draft:</strong> Initial upload, admin only.
+                              </li>
+                              <li>
+                                • <strong>In Review:</strong> Subject to technical validation.
+                              </li>
+                              <li>
+                                • <strong>AFC:</strong> Approved for Construction (visible to field engineers. If Client Visible is toggled ON, it automatically publishes under the client's 'Approved Documents' or 'Test Reports').
+                              </li>
+                              <li>
+                                • <strong>As-Built:</strong> Confirmed final drawings (If Client Visible is toggled ON, it automatically publishes under the client's 'As-Built Drawings' or 'Test Reports').
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>New State</Label>
+                        <Select value={newDocState} onValueChange={setNewDocState}>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="in_review">In Review</SelectItem>
+                            <SelectItem value="afc">
+                              Approved for Construction (AFC)
+                            </SelectItem>
+                            <SelectItem value="as_built">As-Built</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <Button
+                        onClick={() => transitionDocStateMutation.mutate()}
+                        className="w-full"
+                        disabled={
+                          transitionDocStateMutation.isPending ||
+                          newDocState === selectedDoc?.state
+                        }
+                      >
+                        {transitionDocStateMutation.isPending
+                          ? "Updating..."
+                          : "Update State"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            );
+          })()}
         </TabsContent>
 
         <div className="pt-2">

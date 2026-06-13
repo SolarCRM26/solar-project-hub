@@ -320,8 +320,8 @@ const AdminDocuments = () => {
               <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
                 <div>
                   <Label className="text-sm font-medium">Client Visible</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Allow clients to see this document when portal access is enabled
+                  <p className="text-xs text-muted-foreground text-pretty">
+                    Allow clients to see this document. When enabled, setting the document state to "Approved for Construction (AFC)" or "As-Built" will automatically display it under the client's "Approved Documents", "As-Built Drawings", or "Test Reports" based on type.
                   </p>
                 </div>
                 <Switch
@@ -595,8 +595,8 @@ const AdminDocuments = () => {
             <div className="flex items-center justify-between rounded-lg border border-border/60 p-3">
               <div>
                 <Label className="text-sm font-medium">Client Visible</Label>
-                <p className="text-xs text-muted-foreground">
-                  Allow clients to see this document when portal access is enabled
+                <p className="text-xs text-muted-foreground text-pretty">
+                  Allow clients to see this document. When enabled, setting the document state to "Approved for Construction (AFC)" or "As-Built" will automatically display it under the client's "Approved Documents", "As-Built Drawings", or "Test Reports" based on type.
                 </p>
               </div>
               <Switch
@@ -627,16 +627,16 @@ const AdminDocuments = () => {
               </p>
             </div>
 
-            <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
-              <div className="flex gap-2">
-                <AlertCircle className="h-4 w-4 text-info mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-info">Document State Workflow</p>
+            <div className="p-3 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-200/50 dark:border-indigo-900/50 rounded-lg">
+              <div className="flex gap-2.5">
+                <AlertCircle className="h-4 w-4 text-indigo-600 dark:text-indigo-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs">
+                  <p className="font-semibold text-indigo-700 dark:text-indigo-300">Document State Workflow</p>
                   <ul className="mt-1 text-muted-foreground space-y-1">
                     <li>• <strong>Draft:</strong> Initial creation, admin only</li>
                     <li>• <strong>In Review:</strong> Under review by team</li>
-                    <li>• <strong>AFC:</strong> Released to field (engineers can access)</li>
-                    <li>• <strong>As-Built:</strong> Final as-constructed drawings</li>
+                    <li>• <strong>AFC:</strong> Released to field (If Client Visible is toggled ON, automatically publishes under client's 'Approved Documents' or 'Test Reports').</li>
+                    <li>• <strong>As-Built:</strong> Final as-constructed drawings (If Client Visible is toggled ON, automatically publishes under client's 'As-Built Drawings' or 'Test Reports').</li>
                   </ul>
                 </div>
               </div>
