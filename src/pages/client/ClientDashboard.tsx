@@ -43,13 +43,12 @@ type StageFileRow = {
 
 const stageOrder = [
   "lead_created",
-  "proposal_approved",
-  "contract_signed",
   "design_started",
   "design_approved",
-  "build_started",
+  "proposal_approved",
+  "contract_signed",
   "qa_passed",
-  "commissioned",
+  "build_started",
   "closeout_delivered",
 ];
 
@@ -110,7 +109,7 @@ const ClientDashboard = () => {
       if (projectIds.length === 0) return [];
 
       try {
-        const [legacyPhotosRes, taskPhotosRes] = await Promise.all([
+        const [legacyPhotosRes, taskPhotosRes, checklistRunsRes] = await Promise.all([
           supabase
             .from("photos")
             .select("*")
@@ -118,6 +117,10 @@ const ClientDashboard = () => {
           supabase
             .from("task_photos")
             .select("*")
+            .in("project_id", projectIds),
+          supabase
+            .from("checklist_runs")
+            .select("project_id, updated_at, created_at, completed_items")
             .in("project_id", projectIds)
         ]);
 
@@ -136,8 +139,48 @@ const ClientDashboard = () => {
           url: "", // will be populated with signed URL
         }));
 
-        if (taskPhotos.length > 0) {
-          const filePaths = taskPhotos.map((photo) => photo.file_path);
+        // Extract photos from checklist runs
+        const checklistPhotos: any[] = [];
+        (checklistRunsRes.data || []).forEach((run: any) => {
+          const completedItems = run.completed_items;
+          if (!completedItems) return;
+
+          const addIfImage = (file: any) => {
+            const isImage = file.mime_type?.startsWith("image/") || 
+                            /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.file_name);
+            if (isImage) {
+              checklistPhotos.push({
+                id: file.file_path,
+                project_id: run.project_id,
+                caption: file.file_name,
+                created_at: file.uploaded_at || run.updated_at || run.created_at,
+                bucket: "project-documents",
+                file_path: file.file_path,
+                url: "",
+              });
+            }
+          };
+
+          if (Array.isArray(completedItems)) {
+            completedItems.forEach((item: any) => {
+              if (item && Array.isArray(item.files)) {
+                item.files.forEach(addIfImage);
+              }
+            });
+          } else if (typeof completedItems === "object") {
+            Object.keys(completedItems).forEach((key) => {
+              const itemState = completedItems[key];
+              if (itemState && Array.isArray(itemState.files)) {
+                itemState.files.forEach(addIfImage);
+              }
+            });
+          }
+        });
+
+        const allDocsBucketPhotos = [...taskPhotos, ...checklistPhotos];
+
+        if (allDocsBucketPhotos.length > 0) {
+          const filePaths = allDocsBucketPhotos.map((photo) => photo.file_path);
           const { data: signedUrls, error: signedUrlsError } = await supabase.storage
             .from("project-documents")
             .createSignedUrls(filePaths, 3600); // 1 hour expiration
@@ -145,7 +188,7 @@ const ClientDashboard = () => {
           if (signedUrlsError) {
             console.error("Error generating signed URLs:", signedUrlsError);
           } else {
-            taskPhotos.forEach((photo) => {
+            allDocsBucketPhotos.forEach((photo) => {
               const matched = signedUrls?.find((s) => s.path === photo.file_path);
               if (matched) {
                 photo.url = matched.signedUrl;
@@ -154,7 +197,10 @@ const ClientDashboard = () => {
           }
         }
 
-        return [...legacyPhotos, ...taskPhotos];
+        // Return combined list sorted by created_at descending
+        return [...legacyPhotos, ...allDocsBucketPhotos].sort(
+          (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+        );
       } catch (error) {
         console.error("Error fetching project photos:", error);
         return [];
@@ -170,11 +216,11 @@ const ClientDashboard = () => {
       if (projectIds.length === 0) return [];
       const { data, error } = await supabase
         .from("checklist_runs")
-        .select("project_id, updated_at, status")
+        .select("project_id, updated_at, status, completed_items")
         .in("project_id", projectIds)
         .order("updated_at", { ascending: false });
       if (error) throw error;
-      return data as { project_id: string; updated_at: string; status: string }[];
+      return data || [];
     },
     enabled: projects.length > 0,
   });

@@ -2,15 +2,14 @@ import { Check } from 'lucide-react';
 import { stageLabels } from '@/components/StatusBadges';
 
 const lifecycleStages = [
-  'lead_created',
-  'proposal_approved',
-  'contract_signed',
-  'design_started',
-  'design_approved',
-  'build_started',
-  'qa_passed',
-  'commissioned',
-  'closeout_delivered',
+  'lead_created',       // Site Survey
+  'design_started',     // PCIR
+  'design_approved',    // Design
+  'proposal_approved',  // Proposal
+  'contract_signed',    // Contract Signed
+  'qa_passed',          // Procurement
+  'build_started',      // Installation
+  'closeout_delivered', // Closeout Package
 ] as const;
 
 interface ProjectLifecycleStepperProps {

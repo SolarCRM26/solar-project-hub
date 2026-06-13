@@ -27,13 +27,12 @@ import { ProjectLifecycleStepper } from "@/components/ProjectLifecycleStepper";
 
 const stageOrder = [
   "lead_created",
-  "proposal_approved",
-  "contract_signed",
   "design_started",
   "design_approved",
-  "build_started",
+  "proposal_approved",
+  "contract_signed",
   "qa_passed",
-  "commissioned",
+  "build_started",
   "closeout_delivered",
 ];
 
