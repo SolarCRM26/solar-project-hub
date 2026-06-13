@@ -2188,7 +2188,6 @@ const AdminProjectDetail = () => {
                                   <Input
                                     id={`visual-file-${item.id}`}
                                     type="file"
-                                    accept="image/*,.pdf"
                                     className="hidden"
                                     multiple
                                     disabled={uploadingItemId === item.id}
@@ -2316,7 +2315,6 @@ const AdminProjectDetail = () => {
                                 <Input
                                   id={`work-file-${item.id}`}
                                   type="file"
-                                  accept="image/*,.pdf"
                                   className="hidden"
                                   multiple
                                   disabled={uploadingItemId === item.id}
