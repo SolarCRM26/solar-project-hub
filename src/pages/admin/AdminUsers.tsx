@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Users, Search, Shield, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -61,8 +62,8 @@ const AdminUsers = () => {
 
   const [form, setForm] = useState({
     email: "",
-    password: "",
     full_name: "",
+    role: "engineering" as AppRole,
   });
 
   const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
@@ -103,25 +104,25 @@ const AdminUsers = () => {
 
   const createUser = useMutation({
     mutationFn: async () => {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email,
-        password: form.password,
-        options: {
-          data: { full_name: form.full_name },
-          emailRedirectTo: window.location.origin,
+      const { data, error } = await supabase.functions.invoke("invite-user", {
+        body: {
+          email: form.email,
+          fullName: form.full_name,
+          role: form.role,
+          redirectTo: `${window.location.origin}/reset-password`,
         },
       });
 
-      if (authError) throw authError;
-      return authData;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setOpen(false);
-      setForm({ email: "", password: "", full_name: "" });
+      setForm({ email: "", full_name: "", role: "engineering" });
       toast({
-        title: "User created",
-        description: "User has been invited via email",
+        title: "User invited",
+        description: "An invitation email has been sent.",
       });
     },
     onError: (e: any) =>
@@ -258,26 +259,34 @@ const AdminUsers = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Initial Password</Label>
-                <Input
-                  type="password"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, password: e.target.value }))
+                <Label>Role</Label>
+                <Select
+                  value={form.role}
+                  onValueChange={(value) =>
+                    setForm((f) => ({ ...f, role: value as AppRole }))
                   }
-                  required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(roleLabels).map(([role, label]) => (
+                      <SelectItem key={role} value={role}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <p className="text-xs text-muted-foreground">
-                User will receive an email confirmation. Assign roles after
-                creation.
+                User will receive an email invitation to set their password and log in.
               </p>
               <Button
                 type="submit"
                 className="w-full"
                 disabled={createUser.isPending}
               >
-                {createUser.isPending ? "Creating..." : "Create User"}
+                {createUser.isPending ? "Inviting..." : "Send Invitation"}
               </Button>
             </form>
           </DialogContent>

@@ -12,6 +12,7 @@ import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import ResetPassword from "./pages/auth/ResetPassword";
 import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProjects from "./pages/admin/AdminProjects";
@@ -56,6 +57,7 @@ const App = () => (
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Index />} />
               <Route path="/info/:slug" element={<PublicInfoPage />} />

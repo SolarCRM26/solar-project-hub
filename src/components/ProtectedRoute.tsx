@@ -21,6 +21,11 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   // Not logged in → go to auth
   if (!user) return <Navigate to="/login" replace />;
 
+  // If password setup is pending, force redirection to reset password
+  if (user.user_metadata?.pending_password_setup === true) {
+    return <Navigate to="/reset-password" replace />;
+  }
+
   // Wrong role for this section → back to index, which routes to their dashboard
   if (allowedRoles && !allowedRoles.some((r) => roles.includes(r))) {
     return <Navigate to="/" replace />;
