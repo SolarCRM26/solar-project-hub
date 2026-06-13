@@ -705,13 +705,20 @@ const AdminTasks = () => {
                         </div>
                         <div className="mt-2 space-y-1">
                           {runItems.map((item: any, idx: number) => (
-                            <div key={idx} className="flex items-center gap-2 text-xs">
-                              <span className={item.checked ? "text-green-600 font-bold" : "text-muted-foreground"}>
-                                {item.checked ? "✓" : "○"}
-                              </span>
-                              <span className={item.checked ? "line-through text-muted-foreground" : ""}>
-                                {item.text}
-                              </span>
+                            <div key={idx} className="space-y-1 py-1 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className={item.checked ? "text-green-600 font-bold" : "text-muted-foreground"}>
+                                  {item.checked ? "✓" : "○"}
+                                </span>
+                                <span className={item.checked ? "line-through text-muted-foreground" : ""}>
+                                  {item.text}
+                                </span>
+                              </div>
+                              {item.notes && (
+                                <div className="pl-6 text-xs text-muted-foreground bg-muted/30 p-1.5 rounded border border-border/40 italic">
+                                  Note: {item.notes}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

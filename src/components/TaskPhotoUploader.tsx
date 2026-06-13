@@ -222,7 +222,8 @@ export const TaskPhotoUploader = ({
       const photo = photos.find((p) => p.id === photoId);
       if (!photo) throw new Error("Photo not found");
 
-      // Delete from storage
+      // Delete from storage (engineers can delete their own task photos
+      // via the "Engineers delete own task photos" storage RLS policy)
       const { error: storageError } = await supabase.storage
         .from("project-documents")
         .remove([photo.file_path]);

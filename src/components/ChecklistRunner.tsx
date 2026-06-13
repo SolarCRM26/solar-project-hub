@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -6,8 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -58,6 +56,11 @@ export const ChecklistRunner = ({
   const [items, setItems] = useState<ChecklistItemData[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Tracks which run ID we've already loaded items from.
+  // Once set, we won't reload from DB for the same run
+  // (prevents background refetches from wiping local checkbox state).
+  const initializedFromRunId = useRef<string | null>(null);
+
   // Fetch available templates
   const { data: templates = [] } = useQuery({
     queryKey: ["checklist-templates"],
@@ -86,39 +89,74 @@ export const ChecklistRunner = ({
     enabled: !!taskId,
   });
 
-  // Load active run
-  const activeRun = existingRuns.find(
-    (run: any) => run.status === "in_progress",
-  );
+  // Active run: in_progress has priority; fall back to most recent completed run
+  const activeRun =
+    existingRuns.find((run: any) => run.status === "in_progress") ||
+    existingRuns.find((run: any) => run.status === "completed");
 
-  // Load items when active run or template selected
+  // ─────────────────────────────────────────────────────────────────────────
+  // EFFECT 1: Sync items from active run.
+  //
+  // Only fires when activeRun.id or activeRun.status changes.
+  // Uses `initializedFromRunId` ref to avoid overwriting local checkbox state
+  // on every background refetch (which wouldn't change id/status anyway, but
+  // we guard explicitly for safety).
+  //
+  //   • New run seen for first time  → load from DB
+  //   • Same run, status flipped to 'completed' → re-sync (trigger fired)
+  //   • Same run, status still 'in_progress' → DO NOTHING (keep local state)
+  // ─────────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (activeRun) {
-      setSelectedTemplateId(activeRun.template_id);
+    if (runsLoading) return;
+    if (!activeRun) return;
+
+    const alreadyInitialized = initializedFromRunId.current === activeRun.id;
+
+    if (!alreadyInitialized) {
+      // First time we see this run — load from DB
       const completedItems = Array.isArray(activeRun.completed_items)
         ? (activeRun.completed_items as unknown as ChecklistItemData[])
         : [];
       setItems(completedItems);
-    } else if (selectedTemplateId) {
-      const template = templates.find((t) => t.id === selectedTemplateId);
-      if (template) {
-        const templateItems = Array.isArray(template.items)
-          ? (template.items as unknown as ChecklistItemData[])
-          : [];
-        setItems(
-          templateItems.map((item: any) => ({
-            ...item,
-            checked: false,
-            notes: "",
-          })),
-        );
-      }
+      setSelectedTemplateId(activeRun.template_id);
+      initializedFromRunId.current = activeRun.id;
+    } else if (activeRun.status === "completed") {
+      // DB trigger auto-completed the run — reload to show final checked state
+      const completedItems = Array.isArray(activeRun.completed_items)
+        ? (activeRun.completed_items as unknown as ChecklistItemData[])
+        : [];
+      setItems(completedItems);
     }
-  }, [activeRun, selectedTemplateId, templates]);
+    // alreadyInitialized + in_progress → preserve local state
+  }, [activeRun?.id, activeRun?.status, runsLoading]);
 
-  // Create new checklist run
+  // ─────────────────────────────────────────────────────────────────────────
+  // EFFECT 2: Load template items when user picks a template (no run yet)
+  // ─────────────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (activeRun || runsLoading) return; // never override an existing run
+    if (!selectedTemplateId) return;
+
+    const template = templates.find((t: any) => t.id === selectedTemplateId);
+    if (template) {
+      const templateItems = Array.isArray(template.items)
+        ? (template.items as unknown as ChecklistItemData[])
+        : [];
+      setItems(
+        templateItems.map((item: any) => ({
+          ...item,
+          checked: false,
+          notes: "",
+        }))
+      );
+    }
+  }, [selectedTemplateId, templates]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CREATE RUN
+  // ─────────────────────────────────────────────────────────────────────────
   const createRun = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (itemsToSave: ChecklistItemData[]) => {
       if (!selectedTemplateId) throw new Error("No template selected");
 
       const { data, error } = await supabase
@@ -127,19 +165,27 @@ export const ChecklistRunner = ({
           task_id: taskId,
           project_id: projectId,
           template_id: selectedTemplateId,
-          completed_items: items as any,
+          completed_items: itemsToSave as any,
           status: "in_progress",
+          completed_by: user?.id,
         })
-        .select()
+        .select("*, checklist_templates(name)")
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["checklist-runs", taskId] });
-      toast({ title: "Checklist started" });
+    onSuccess: (data, itemsToSave) => {
+      // Mark this run as initialized so Effect 1 doesn't reload from DB
+      initializedFromRunId.current = data.id;
+      // Push new run into cache
+      queryClient.setQueryData(["checklist-runs", taskId], (old: any) => {
+        return old ? [data, ...old] : [data];
+      });
+      // Keep the items the user had when they clicked Save
+      setItems(itemsToSave);
       setHasUnsavedChanges(false);
+      toast({ title: "Checklist started" });
     },
     onError: (error: Error) => {
       toast({
@@ -150,27 +196,47 @@ export const ChecklistRunner = ({
     },
   });
 
-  // Save progress
+  // ─────────────────────────────────────────────────────────────────────────
+  // SAVE PROGRESS
+  // ─────────────────────────────────────────────────────────────────────────
   const saveProgress = useMutation({
-    mutationFn: async () => {
-      if (!activeRun) {
-        return createRun.mutateAsync();
+    mutationFn: async (itemsToSave: ChecklistItemData[]) => {
+      if (!activeRun || activeRun.status === "completed") {
+        // No in_progress run: create one
+        return createRun.mutateAsync(itemsToSave);
       }
 
       const { error } = await supabase
         .from("checklist_runs")
         .update({
-          completed_items: items as any,
+          completed_items: itemsToSave as any,
           updated_at: new Date().toISOString(),
+          completed_by: user?.id,
         })
         .eq("id", activeRun.id);
 
       if (error) throw error;
+
+      // Return enough info for onSuccess
+      return { savedRunId: activeRun.id };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["checklist-runs", taskId] });
-      toast({ title: "Progress saved" });
+    onSuccess: (result, itemsToSave) => {
+      if (!result) return; // handled by createRun.onSuccess
+
+      // Optimistically patch the cache so the refetch's Effect 1 won't reload
+      queryClient.setQueryData(["checklist-runs", taskId], (old: any) => {
+        if (!old) return old;
+        return old.map((run: any) =>
+          run.id === (result as any).savedRunId
+            ? { ...run, completed_items: itemsToSave }
+            : run
+        );
+      });
+
+      // Keep the checked state locally — do NOT wait for refetch
+      setItems(itemsToSave);
       setHasUnsavedChanges(false);
+      toast({ title: "Progress saved" });
     },
     onError: (error: Error) => {
       toast({
@@ -181,37 +247,50 @@ export const ChecklistRunner = ({
     },
   });
 
-  // Handle item toggle
+  // ─────────────────────────────────────────────────────────────────────────
+  // HANDLERS
+  // ─────────────────────────────────────────────────────────────────────────
   const handleToggle = (id: string, checked: boolean) => {
-    setItems(
-      items.map((item) => (item.id === id ? { ...item, checked } : item)),
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, checked } : item))
     );
     setHasUnsavedChanges(true);
   };
 
-  // Handle notes change
   const handleNotesChange = (id: string, notes: string) => {
-    setItems(items.map((item) => (item.id === id ? { ...item, notes } : item)));
+    setItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, notes } : item))
+    );
     setHasUnsavedChanges(true);
   };
 
-  // Calculate progress
+  // ─────────────────────────────────────────────────────────────────────────
+  // DERIVED STATE
+  // ─────────────────────────────────────────────────────────────────────────
   const totalItems = items.length;
-  const completedItems = items.filter((item) => item.checked).length;
+  const completedItemsCount = items.filter((item) => item.checked).length;
   const requiredItems = items.filter((item) => item.required).length;
   const completedRequiredItems = items.filter(
-    (item) => item.required && item.checked,
+    (item) => item.required && item.checked
   ).length;
-  const allRequiredComplete = requiredItems === completedRequiredItems;
+  const allRequiredComplete =
+    requiredItems > 0 && requiredItems === completedRequiredItems;
   const isComplete = activeRun?.status === "completed";
+  const inProgressRun = existingRuns.find(
+    (run: any) => run.status === "in_progress"
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <ListChecks className="h-4 w-4 mr-2" />
-          {activeRun ? "Continue Checklist" : "Run Checklist"}
-          {activeRun && activeRun.status === "in_progress" && (
+          {inProgressRun
+            ? "Continue Checklist"
+            : isComplete
+            ? "View Checklist"
+            : "Run Checklist"}
+          {inProgressRun && (
             <Badge variant="secondary" className="ml-2">
               In Progress
             </Badge>
@@ -232,7 +311,7 @@ export const ChecklistRunner = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Template Selection */}
+          {/* Template Selection — only when no run exists */}
           {!activeRun && (
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -261,7 +340,7 @@ export const ChecklistRunner = ({
             </div>
           )}
 
-          {/* Active Template Info */}
+          {/* Active run header */}
           {activeRun && (
             <Card>
               <CardHeader className="pb-3">
@@ -282,11 +361,11 @@ export const ChecklistRunner = ({
             </Card>
           )}
 
-          {/* Progress */}
+          {/* Progress bar */}
           {items.length > 0 && (
             <ChecklistProgress
               totalItems={totalItems}
-              completedItems={completedItems}
+              completedItems={completedItemsCount}
               requiredItems={requiredItems}
               completedRequiredItems={completedRequiredItems}
             />
@@ -316,7 +395,7 @@ export const ChecklistRunner = ({
             </div>
           )}
 
-          {/* Actions */}
+          {/* Action buttons */}
           {items.length > 0 && !isComplete && (
             <div className="flex items-center justify-between pt-4 border-t">
               <div className="text-sm text-muted-foreground">
@@ -329,7 +408,7 @@ export const ChecklistRunner = ({
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={() => saveProgress.mutate()}
+                  onClick={() => saveProgress.mutate(items)}
                   disabled={!hasUnsavedChanges || saveProgress.isPending}
                 >
                   {saveProgress.isPending ? (
@@ -341,7 +420,7 @@ export const ChecklistRunner = ({
                 </Button>
                 {!activeRun && (
                   <Button
-                    onClick={() => createRun.mutate()}
+                    onClick={() => createRun.mutate(items)}
                     disabled={!selectedTemplateId || createRun.isPending}
                   >
                     {createRun.isPending ? (
@@ -356,7 +435,7 @@ export const ChecklistRunner = ({
             </div>
           )}
 
-          {/* Completion Status */}
+          {/* "Not all required done" hint */}
           {!allRequiredComplete && items.length > 0 && !isComplete && (
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
               <div className="flex items-start gap-2">
@@ -371,7 +450,8 @@ export const ChecklistRunner = ({
             </div>
           )}
 
-          {isComplete && (
+          {/* Completed banner */}
+          {isComplete && activeRun?.completed_at && (
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
               <div className="flex items-start gap-2">
                 <CheckCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5" />

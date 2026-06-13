@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { TaskPhotoUploader } from '@/components/TaskPhotoUploader';
 import { TaskComments } from '@/components/TaskComments';
 import { ChecklistRunner } from '@/components/ChecklistRunner';
+import { DocumentUploader } from '@/components/DocumentUploader';
 import { 
   ClipboardCheck, 
   Camera, 
@@ -17,7 +18,8 @@ import {
   CheckCircle, 
   PlayCircle,
   Loader2,
-  AlertCircle 
+  AlertCircle,
+  Paperclip
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { StatusBadge } from '@/components/StatusBadges';
@@ -96,7 +98,6 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
         .from('tasks')
         .update({ 
           status: 'in_progress',
-          started_at: new Date().toISOString(),
         })
         .eq('id', taskId);
       if (error) throw error;
@@ -161,7 +162,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
 
         <div className="flex-1 overflow-hidden">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="checklist" className="relative">
                 <ClipboardCheck className="h-4 w-4 mr-2" />
                 Checklist
@@ -185,6 +186,10 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
                 {comments.length > 0 && (
                   <Badge variant="secondary" className="ml-2">{comments.length}</Badge>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="files">
+                <Paperclip className="h-4 w-4 mr-2" />
+                Files
               </TabsTrigger>
             </TabsList>
 
@@ -259,6 +264,24 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
 
               <TabsContent value="comments" className="mt-0">
                 <TaskComments taskId={taskId} />
+              </TabsContent>
+
+              <TabsContent value="files" className="mt-0">
+                {taskStatus === 'pending' ? (
+                  <Card className="bg-muted/40 shadow-sm">
+                    <CardContent className="py-8 text-center">
+                      <Paperclip className="h-12 w-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+                      <p className="text-muted-foreground">
+                        Start the task to attach files
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <DocumentUploader
+                    projectId={projectId}
+                    onSuccess={() => {}}
+                  />
+                )}
               </TabsContent>
             </div>
           </Tabs>
