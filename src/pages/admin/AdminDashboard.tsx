@@ -21,21 +21,23 @@ import { useNavigate } from "react-router-dom";
 const dealStageFlow = [
   "lead_created",
   "design_started",
+  "design_approved",
   "proposal_approved",
   "contract_signed",
-  "design_approved",
+  "qa_passed",
   "build_started",
   "closeout_delivered",
 ] as const;
 
 const dealStageLabels: Record<string, string> = {
   lead_created: "Site Survey",
-  design_started: "Design Started",
-  proposal_approved: "Proposal Submitted",
+  design_started: "PCIR",
+  design_approved: "Design",
+  proposal_approved: "Proposal",
   contract_signed: "Contract Signed",
-  design_approved: "Procurement",
+  qa_passed: "Procurement",
   build_started: "Installation",
-  closeout_delivered: "Closeout Delivered",
+  closeout_delivered: "Closeout Package",
 };
 
 const AdminDashboard = () => {

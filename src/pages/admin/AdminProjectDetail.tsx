@@ -311,30 +311,37 @@ const defaultInstallationChecklistSections: ChecklistSectionDefinition[] = [
 
 const stageFileDefinitions = [
   { key: "site_survey", name: "Site Survey" },
+  { key: "pcir", name: "PCIR" },
   { key: "design", name: "Design" },
   { key: "proposal", name: "Proposal" },
-  { key: "contract", name: "Contract" },
+  { key: "contract", name: "Contract Signed" },
   { key: "procurement", name: "Procurement" },
   { key: "installation", name: "Installation" },
-  { key: "commissioning", name: "Commissioning" },
+  { key: "closeout_package", name: "Closeout Package" },
 ];
 
 const dealStageFlow: readonly DealFlowItem[] = [
   {
     key: "site_survey",
-    label: "site survey",
+    label: "Site Survey",
     projectStage: "lead_created",
     stageCardKey: "site_survey",
   },
   {
-    key: "design_started",
-    label: "Design Started",
+    key: "pcir",
+    label: "PCIR",
     projectStage: "design_started",
+    stageCardKey: "pcir",
+  },
+  {
+    key: "design",
+    label: "Design",
+    projectStage: "design_approved",
     stageCardKey: "design",
   },
   {
-    key: "proposal_submitted",
-    label: "proposal submitted",
+    key: "proposal",
+    label: "Proposal",
     projectStage: "proposal_approved",
     stageCardKey: "proposal",
   },
@@ -346,34 +353,34 @@ const dealStageFlow: readonly DealFlowItem[] = [
   },
   {
     key: "procurement",
-    label: "procurement",
-    projectStage: "design_approved",
+    label: "Procurement",
+    projectStage: "qa_passed",
     stageCardKey: "procurement",
   },
   {
     key: "installation",
-    label: "installation",
+    label: "Installation",
     projectStage: "build_started",
     stageCardKey: "installation",
   },
   {
-    key: "closeout_delivered",
-    label: "Closeout Delivered",
+    key: "closeout_package",
+    label: "Closeout Package",
     projectStage: "closeout_delivered",
-    stageCardKey: "commissioning",
+    stageCardKey: "closeout_package",
   },
 ] as const;
 
 const projectStageToFlowKey: Record<string, DealFlowItem["key"]> = {
   lead_created: "site_survey",
-  design_started: "design_started",
-  design_approved: "procurement",
-  proposal_approved: "proposal_submitted",
+  design_started: "pcir",
+  design_approved: "design",
+  proposal_approved: "proposal",
   contract_signed: "contract_signed",
+  qa_passed: "procurement",
   build_started: "installation",
-  qa_passed: "installation",
-  commissioned: "closeout_delivered",
-  closeout_delivered: "closeout_delivered",
+  commissioned: "closeout_package",
+  closeout_delivered: "closeout_package",
 };
 
 const flowKeyToStageCardKey = Object.fromEntries(

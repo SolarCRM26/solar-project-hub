@@ -2,26 +2,24 @@ import { Badge } from "@/components/ui/badge";
 
 const stageColors: Record<string, string> = {
   lead_created: "bg-muted text-muted-foreground",
-  proposal_approved: "bg-info/20 text-info",
-  contract_signed: "bg-info/30 text-info",
   design_started: "bg-warning/20 text-warning-foreground",
   design_approved: "bg-warning/30 text-warning-foreground",
-  build_started: "bg-primary/20 text-primary-foreground",
+  proposal_approved: "bg-info/20 text-info",
+  contract_signed: "bg-info/30 text-info",
   qa_passed: "bg-success/20 text-success-foreground",
-  commissioned: "bg-success/30 text-success-foreground",
+  build_started: "bg-primary/20 text-primary-foreground",
   closeout_delivered: "bg-success/40 text-success-foreground",
 };
 
 const stageLabels: Record<string, string> = {
   lead_created: "Site Survey",
-  proposal_approved: "Proposal Submitted",
+  design_started: "PCIR",
+  design_approved: "Design",
+  proposal_approved: "Proposal",
   contract_signed: "Contract Signed",
-  design_started: "Design Started",
-  design_approved: "Procurement",
+  qa_passed: "Procurement",
   build_started: "Installation",
-  qa_passed: "HR",
-  commissioned: "PV Monitor",
-  closeout_delivered: "Closeout Delivered",
+  closeout_delivered: "Closeout Package",
 };
 
 export const StageBadge = ({

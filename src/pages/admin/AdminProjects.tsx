@@ -51,24 +51,24 @@ const stages = Object.entries(stageLabels).map(([value, label]) => ({
 
 const dealCardStageLabels: Record<string, string> = {
   lead_created: "Site Survey",
-  design_started: "Design Started",
-  proposal_approved: "Proposal Submitted",
+  design_started: "PCIR",
+  design_approved: "Design",
+  proposal_approved: "Proposal",
   contract_signed: "Contract Signed",
-  design_approved: "Procurement",
+  qa_passed: "Procurement",
   build_started: "Installation",
-  qa_passed: "HR",
-  commissioned: "PV Monitor",
-  closeout_delivered: "Closeout Delivered",
+  closeout_delivered: "Closeout Package",
 };
 
 const dealWorkflowStages = [
   { value: "lead_created", label: "Site Survey" },
-  { value: "design_started", label: "Design Started" },
-  { value: "proposal_approved", label: "Proposal Submitted" },
+  { value: "design_started", label: "PCIR" },
+  { value: "design_approved", label: "Design" },
+  { value: "proposal_approved", label: "Proposal" },
   { value: "contract_signed", label: "Contract Signed" },
-  { value: "design_approved", label: "Procurement" },
+  { value: "qa_passed", label: "Procurement" },
   { value: "build_started", label: "Installation" },
-  { value: "closeout_delivered", label: "Closeout Delivered" },
+  { value: "closeout_delivered", label: "Closeout Package" },
 ] as const;
 
 const AdminProjects = () => {
