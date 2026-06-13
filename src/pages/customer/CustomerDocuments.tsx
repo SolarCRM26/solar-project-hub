@@ -102,6 +102,21 @@ const CustomerDocuments = () => {
     enabled: !!user,
   });
 
+  const { data: checklistRuns = [], isLoading: checklistRunsLoading } = useQuery({
+    queryKey: ['customer-checklist-runs', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('checklist_runs')
+        .select('*, projects(id, name, stage, is_client_portal_active, show_documents_to_client)')
+        .order('updated_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
   const normalizedSearch = search.trim().toLowerCase();
 
   const isVisibleToClient = (doc: CustomerDocument) => {
@@ -127,6 +142,78 @@ const CustomerDocuments = () => {
     const docVisible = doc.is_client_visible ?? true;
     return portalActive && docsEnabled && docVisible;
   });
+
+  const itemTitleMap: Record<string, string> = {
+    'receive-deliver-materials': 'Receive/Deliver Materials to Job Site',
+    'materials-quality-inspection': 'Materials Quality Inspection & Sign-Off',
+    'install-racking-system': 'Install Racking System',
+    'install-pvc-pipe': 'Install PVC Pipe',
+    'install-inverter': 'Install Inverter',
+    'install-dc-home-run': 'Install Home Run for DC',
+    'install-ac-disconnect': 'Install AC Disconnect and Wiring',
+    'install-pv-modules': 'Install PV Modules',
+    'submit-shop-drawings': 'Submit Shop Drawings to ESA',
+    'pm-review-signoff': 'Project Manager Review & Sign-Off',
+  };
+
+  const getItemName = (id: string) => {
+    if (itemTitleMap[id]) return itemTitleMap[id];
+    return id
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const checklistFileDocuments = checklistRuns.flatMap((run: any) => {
+    const project = run.projects;
+    const portalActive = project?.is_client_portal_active ?? true;
+    const docsEnabled = project?.show_documents_to_client ?? true;
+    if (!portalActive || !docsEnabled) return [];
+
+    const completedItems = run.completed_items;
+    if (!completedItems) return [];
+
+    const filesList: any[] = [];
+
+    if (Array.isArray(completedItems)) {
+      completedItems.forEach((item: any) => {
+        if (item && Array.isArray(item.files)) {
+          item.files.forEach((file: any) => {
+            filesList.push({
+              file_path: file.file_path,
+              file_name: file.file_name,
+              file_size: file.file_size,
+              mime_type: file.mime_type,
+              uploaded_at: file.uploaded_at || run.updated_at || run.created_at,
+              project,
+              item_name: item.text || 'Checklist Item',
+            });
+          });
+        }
+      });
+    } else if (typeof completedItems === 'object') {
+      Object.keys(completedItems).forEach((key) => {
+        const itemState = completedItems[key];
+        if (itemState && Array.isArray(itemState.files)) {
+          itemState.files.forEach((file: any) => {
+            filesList.push({
+              file_path: file.file_path,
+              file_name: file.file_name,
+              file_size: file.file_size,
+              mime_type: file.mime_type,
+              uploaded_at: file.uploaded_at || run.updated_at || run.created_at,
+              project,
+              item_name: getItemName(key),
+            });
+          });
+        }
+      });
+    }
+
+    return filesList;
+  });
+
+  const visibleChecklistFiles = checklistFileDocuments;
 
   const matchesSearch = (doc: CustomerDocument) => {
     if (!normalizedSearch) return true;
@@ -176,6 +263,15 @@ const CustomerDocuments = () => {
 
   const filteredStageFiles = visibleStageFiles.filter(matchesStageFileSearch);
   const stageFilesCount = visibleStageFiles.length;
+
+  const filteredChecklistFiles = visibleChecklistFiles.filter((doc) => {
+    if (!normalizedSearch) return true;
+    return (
+      doc.file_name.toLowerCase().includes(normalizedSearch) ||
+      doc.item_name.toLowerCase().includes(normalizedSearch) ||
+      doc.project?.name?.toLowerCase().includes(normalizedSearch)
+    );
+  });
 
   const openVersionHistory = (doc: CustomerDocument) => {
     setSelectedDoc(doc);
@@ -318,7 +414,7 @@ const CustomerDocuments = () => {
     );
   };
 
-  if (isLoading || stageFilesLoading) {
+  if (isLoading || stageFilesLoading || checklistRunsLoading) {
     return <LoadingSpinner text="Loading document access..." />;
   }
 
@@ -382,8 +478,8 @@ const CustomerDocuments = () => {
             <div className="flex items-center gap-3">
               <FileText className="h-5 w-5 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Stage Uploads</p>
-                <p className="text-2xl font-bold">{stageFilesCount}</p>
+                <p className="text-sm text-muted-foreground">Stage & Checklist Files</p>
+                <p className="text-2xl font-bold">{stageFilesCount + visibleChecklistFiles.length}</p>
               </div>
             </div>
           </CardContent>
@@ -439,6 +535,73 @@ const CustomerDocuments = () => {
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
                         {doc.stage_name || 'stage'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(doc.uploaded_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            downloadStageFile({
+                              file_path: doc.file_path,
+                              file_name: doc.file_name,
+                            })
+                          }
+                          title="Download"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle>Installation Checklist Files</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredChecklistFiles.length === 0 ? (
+            <EmptyState
+              icon={FileText}
+              title="No checklist files available"
+              description="Installation checklist uploads will appear here when shared by the team."
+            />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>File</TableHead>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Checklist Item</TableHead>
+                  <TableHead>Uploaded</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredChecklistFiles.map((doc, idx) => (
+                  <TableRow key={`${doc.file_path}-${idx}`}>
+                    <TableCell>
+                      <div className="space-y-1">
+                        <p className="font-medium">{doc.file_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {(doc.file_size / 1024).toFixed(0)} KB
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>{doc.project?.name || '—'}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {doc.item_name}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">

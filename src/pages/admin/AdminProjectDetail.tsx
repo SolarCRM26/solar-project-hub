@@ -1768,10 +1768,6 @@ const AdminProjectDetail = () => {
                       <span>{stage.name}</span>
                       {isCurrent && <Badge className="text-xs">Current</Badge>}
                     </CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      Entered: {formatDateTime(row.entered_at)} - Completed:{" "}
-                      {formatDateTime(row.completed_at)}
-                    </p>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="space-y-2">
