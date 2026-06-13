@@ -2,6 +2,17 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +73,8 @@ const AdminTasks = () => {
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<any>(null);
 
   const [form, setForm] = useState({
     title: "",
@@ -179,6 +192,57 @@ const AdminTasks = () => {
     },
     onError: (e: any) =>
       toast({ title: "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteTask = useMutation({
+    mutationFn: async (taskId: string) => {
+      // Step 2: Query task_photos for target task
+      const { data: photosData, error: photosError } = await supabase
+        .from("task_photos")
+        .select("file_path")
+        .eq("task_id", taskId);
+
+      if (photosError) {
+        throw new Error(`Failed to query task photos: ${photosError.message}`);
+      }
+
+      // Step 3: Delete storage files from project-documents
+      if (photosData && photosData.length > 0) {
+        const filePaths = photosData.map((p) => p.file_path);
+        const { error: storageError } = await supabase.storage
+          .from("project-documents")
+          .remove(filePaths);
+
+        if (storageError) {
+          throw new Error(`Failed to delete task photo files: ${storageError.message}`);
+        }
+      }
+
+      // Step 4: Delete task row
+      const { error: deleteError } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", taskId);
+
+      if (deleteError) {
+        throw new Error(`Failed to delete task: ${deleteError.message}`);
+      }
+    },
+    onSuccess: () => {
+      // Step 5: Refresh UI
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast({ title: "Task deleted successfully" });
+      setDeleteDialogOpen(false);
+      setTaskToDelete(null);
+    },
+    onError: (e: any) => {
+      // Step 6: Handle Errors
+      toast({
+        title: "Delete failed",
+        description: e.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const filtered = tasks.filter((t) => {
@@ -440,6 +504,16 @@ const AdminTasks = () => {
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Open Deal
                             </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => {
+                                setTaskToDelete(task);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Task
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -460,6 +534,30 @@ const AdminTasks = () => {
           {selectedTask && <TaskComments taskId={selectedTask.id} />}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this task?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. All related comments and task photos will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (taskToDelete) {
+                  deleteTask.mutate(taskToDelete.id);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteTask.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
