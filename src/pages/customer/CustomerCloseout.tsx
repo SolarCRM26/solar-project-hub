@@ -185,10 +185,30 @@ const CustomerCloseout = () => {
     setGeneratingProjectId(project.id);
 
     try {
+      let clientProfileData = null;
+      try {
+        if (project.client_id) {
+          const { data: clientData } = await supabase
+            .from('clients')
+            .select('user_id')
+            .eq('id', project.client_id)
+            .maybeSingle();
+          
+          if (clientData?.user_id) {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', clientData.user_id)
+              .maybeSingle();
+            clientProfileData = profileData;
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching client profile:", err);
+      }
+
       const [clientRes, siteRes, docsRes, milestonesRes] = await Promise.all([
-        project.client_id
-          ? supabase.from('profiles').select('*').eq('user_id', project.client_id).single()
-          : Promise.resolve({ data: null, error: null }),
+        Promise.resolve({ data: clientProfileData, error: null }),
         project.site_id
           ? supabase.from('sites').select('*').eq('id', project.site_id).single()
           : Promise.resolve({ data: null, error: null }),
