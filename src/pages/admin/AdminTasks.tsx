@@ -502,7 +502,7 @@ const AdminTasks = () => {
                               }
                             >
                               <ExternalLink className="mr-2 h-4 w-4" />
-                              Open Deal
+                              Open Project
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"

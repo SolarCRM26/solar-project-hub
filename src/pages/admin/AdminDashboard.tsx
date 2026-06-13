@@ -98,19 +98,19 @@ const AdminDashboard = () => {
           Dashboard
         </h1>
         <p className="text-muted-foreground mt-1">
-          Overview of all solar deals and operations
+          Overview of all solar projects and operations
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
-          title="Total Deals"
+          title="Total Projects"
           value={totalProjects}
           icon={FolderKanban}
           description="All time"
         />
         <StatsCard
-          title="Active Deals"
+          title="Active Projects"
           value={activeProjects}
           icon={Zap}
           description="Currently in progress"
@@ -132,7 +132,7 @@ const AdminDashboard = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg">Deals by Stage</CardTitle>
+            <CardTitle className="text-lg">Projects by Stage</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -202,13 +202,13 @@ const AdminDashboard = () => {
 
       <Card className="border-border/50">
         <CardHeader>
-          <CardTitle className="text-lg">Recent Deals</CardTitle>
+          <CardTitle className="text-lg">Recent Projects</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Deal</TableHead>
+                <TableHead>Project</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Stage</TableHead>
@@ -222,7 +222,7 @@ const AdminDashboard = () => {
                     colSpan={5}
                     className="text-center text-muted-foreground"
                   >
-                    No deals yet
+                    No projects yet
                   </TableCell>
                 </TableRow>
               ) : (

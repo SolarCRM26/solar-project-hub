@@ -951,7 +951,7 @@ const AdminProjectDetail = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
-      toast({ title: "Deal deleted" });
+      toast({ title: "Project deleted" });
       navigate("/admin/projects");
     },
     onError: (e: any) =>
@@ -1674,7 +1674,7 @@ const AdminProjectDetail = () => {
         <CardContent className="p-4 md:p-5 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium text-foreground/80">
-              Deal Workflow
+              Project Workflow
             </p>
             <p className="text-xs text-muted-foreground">
               Click any step to jump to its section
@@ -2094,7 +2094,7 @@ const AdminProjectDetail = () => {
                                     Delete section?
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    This will remove the section "{section.title}" and all of its activities from this deal.
+                                    This will remove the section "{section.title}" and all of its activities from this project.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -2968,7 +2968,7 @@ const AdminProjectDetail = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                No tasks mapped to this deal yet.
+                No tasks mapped to this project yet.
               </p>
             </CardContent>
           </Card>

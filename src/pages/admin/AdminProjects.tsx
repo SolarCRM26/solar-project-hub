@@ -533,16 +533,16 @@ const AdminProjects = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FolderKanban className="h-8 w-8 text-primary" /> Deals
+            <FolderKanban className="h-8 w-8 text-primary" /> Projects
           </h1>
           <p className="text-muted-foreground mt-1">
-            {projects.length} total deals
+            {projects.length} total projects
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="h-4 w-4 mr-2" /> New Deal
+              <Plus className="h-4 w-4 mr-2" /> New Project
             </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
@@ -770,6 +770,7 @@ const AdminProjects = () => {
                       <Input
                         value={newOrganizationName}
                         onChange={(e) => setNewOrganizationName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                         placeholder="Organization name"
                       />
                       <Input
@@ -777,17 +778,20 @@ const AdminProjects = () => {
                         onChange={(e) =>
                           setNewOrganizationAddress(e.target.value)
                         }
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                         placeholder="Address"
                       />
                       <Input
                         value={newOrganizationPhone}
                         onChange={(e) => setNewOrganizationPhone(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                         placeholder="Phone"
                       />
                       <Input
                         type="email"
                         value={newOrganizationEmail}
                         onChange={(e) => setNewOrganizationEmail(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                         placeholder="Email"
                       />
                       <Button
@@ -841,11 +845,13 @@ const AdminProjects = () => {
                       <Input
                         value={newSiteName}
                         onChange={(e) => setNewSiteName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                         placeholder="Site name"
                       />
                       <Input
                         value={newSiteAddress}
                         onChange={(e) => setNewSiteAddress(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                         placeholder="Site address"
                       />
                       <Select
@@ -872,6 +878,7 @@ const AdminProjects = () => {
                           step="any"
                           value={newSiteLatitude}
                           onChange={(e) => setNewSiteLatitude(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                           placeholder="Latitude (optional)"
                         />
                         <Input
@@ -879,6 +886,7 @@ const AdminProjects = () => {
                           step="any"
                           value={newSiteLongitude}
                           onChange={(e) => setNewSiteLongitude(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
                           placeholder="Longitude (optional)"
                         />
                       </div>
@@ -915,7 +923,7 @@ const AdminProjects = () => {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search deals..."
+            placeholder="Search projects..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -989,20 +997,20 @@ const AdminProjects = () => {
         ))}
       </div>
 
-      <Card className="overflow-hidden border-[#E5EAF5] bg-[#F4F7FD]">
-        <CardHeader className="border-b border-[#E5EAF5] bg-transparent">
-          <CardTitle className="text-lg">Deal Pipeline</CardTitle>
-          <p className="text-sm text-[#697086]">
-            {filtered.length} of {projects.length} deals visible
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-lg">Project Pipeline</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {filtered.length} of {projects.length} projects visible
           </p>
         </CardHeader>
         <CardContent className="p-4 sm:p-5">
           {filtered.length === 0 ? (
             <EmptyState
               icon={FolderOpen}
-              title="No deals found"
-              description="Create your first deal to get started or adjust your search filters"
-              actionLabel="Create Deal"
+              title="No projects found"
+              description="Create your first project to get started or adjust your search filters"
+              actionLabel="Create Project"
               onAction={() => setOpen(true)}
             />
           ) : (
