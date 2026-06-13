@@ -1886,6 +1886,16 @@ const AdminProjectDetail = () => {
                         onBlur={() => handleStageNotesBlur(stage.key)}
                         rows={2}
                       />
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleStageNotesBlur(stage.key)}
+                          disabled={saveStageFileRowMutation.isPending}
+                        >
+                          {saveStageFileRowMutation.isPending ? "Saving..." : "Save Notes"}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
