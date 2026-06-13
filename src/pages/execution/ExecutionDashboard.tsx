@@ -70,10 +70,10 @@ const ExecutionDashboard = () => {
     queryKey: ["execution-photos", user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("photos")
-        .select("id, created_at")
+        .from("task_photos")
+        .select("id, uploaded_at")
         .eq("uploaded_by", user!.id)
-        .order("created_at", { ascending: false });
+        .order("uploaded_at", { ascending: false });
       if (error) throw error;
       return data;
     },

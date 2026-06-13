@@ -73,7 +73,31 @@ export const TaskPhotoUploader = ({
         .eq("task_id", taskId)
         .order("uploaded_at", { ascending: false });
       if (error) throw error;
-      return data as TaskPhoto[];
+
+      const taskPhotos = (data || []).map((photo) => ({
+        ...photo,
+        url: "",
+      }));
+
+      if (taskPhotos.length > 0) {
+        const filePaths = taskPhotos.map((photo) => photo.file_path);
+        const { data: signedUrls, error: signedUrlsError } = await supabase.storage
+          .from("project-documents")
+          .createSignedUrls(filePaths, 3600);
+
+        if (signedUrlsError) {
+          console.error("Error generating signed URLs:", signedUrlsError);
+        } else {
+          taskPhotos.forEach((photo) => {
+            const matched = signedUrls?.find((s) => s.path === photo.file_path);
+            if (matched) {
+              photo.url = matched.signedUrl;
+            }
+          });
+        }
+      }
+
+      return taskPhotos as any[];
     },
   });
 
@@ -393,7 +417,7 @@ export const TaskPhotoUploader = ({
               <Card key={photo.id} className="overflow-hidden group">
                 <div className="relative aspect-video">
                   <img
-                    src={getPhotoUrl(photo.file_path)}
+                    src={(photo as any).url || getPhotoUrl(photo.file_path)}
                     alt={photo.caption || "Task photo"}
                     className="w-full h-full object-cover"
                   />

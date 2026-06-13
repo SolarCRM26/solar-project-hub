@@ -108,12 +108,57 @@ const ClientDashboard = () => {
     queryFn: async () => {
       const projectIds = projects.map((p) => p.id);
       if (projectIds.length === 0) return [];
-      const { data, error } = await supabase
-        .from("photos")
-        .select("*")
-        .in("project_id", projectIds);
-      if (error) throw error;
-      return data;
+
+      try {
+        const [legacyPhotosRes, taskPhotosRes] = await Promise.all([
+          supabase
+            .from("photos")
+            .select("*")
+            .in("project_id", projectIds),
+          supabase
+            .from("task_photos")
+            .select("*")
+            .in("project_id", projectIds)
+        ]);
+
+        const legacyPhotos = (legacyPhotosRes.data || []).map((photo) => ({
+          ...photo,
+          bucket: "project-photos",
+          url: supabase.storage
+            .from("project-photos")
+            .getPublicUrl(photo.file_path).data.publicUrl,
+        }));
+
+        const taskPhotos = (taskPhotosRes.data || []).map((photo) => ({
+          ...photo,
+          created_at: photo.uploaded_at,
+          bucket: "project-documents",
+          url: "", // will be populated with signed URL
+        }));
+
+        if (taskPhotos.length > 0) {
+          const filePaths = taskPhotos.map((photo) => photo.file_path);
+          const { data: signedUrls, error: signedUrlsError } = await supabase.storage
+            .from("project-documents")
+            .createSignedUrls(filePaths, 3600); // 1 hour expiration
+
+          if (signedUrlsError) {
+            console.error("Error generating signed URLs:", signedUrlsError);
+          } else {
+            taskPhotos.forEach((photo) => {
+              const matched = signedUrls?.find((s) => s.path === photo.file_path);
+              if (matched) {
+                photo.url = matched.signedUrl;
+              }
+            });
+          }
+        }
+
+        return [...legacyPhotos, ...taskPhotos];
+      } catch (error) {
+        console.error("Error fetching project photos:", error);
+        return [];
+      }
     },
     enabled: projects.length > 0,
   });
@@ -625,9 +670,7 @@ const ClientDashboard = () => {
                               className="aspect-square rounded-lg border border-border/60 overflow-hidden bg-muted/20 relative group"
                             >
                               <img
-                                src={supabase.storage
-                                  .from("project-photos")
-                                  .getPublicUrl(photo.file_path).data.publicUrl}
+                                src={(photo as any).url}
                                 alt={photo.caption || "Installation photo"}
                                 className="w-full h-full object-cover transition-transform group-hover:scale-110"
                               />
