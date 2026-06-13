@@ -84,7 +84,10 @@ const AdminTasks = () => {
     priority: "0",
     due_date: "",
     assigned_to: "",
+    checklist_template_id: "",
   });
+
+  const [taskDetailOpen, setTaskDetailOpen] = useState(false);
 
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
@@ -134,47 +137,97 @@ const AdminTasks = () => {
     },
   });
 
-  // Fetch users with execution-related roles for assignment
-  const { data: engineers = [] } = useQuery({
-    queryKey: ["engineers"],
+  const { data: checklistTemplates = [] } = useQuery({
+    queryKey: ["checklist-templates"],
     queryFn: async () => {
-      // Fetch user IDs for engineering/execution roles
-      const { data: engineerRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .in("role", ["engineering", "execution", "engineer"]);
+      const { data, error } = await supabase
+        .from("checklist_templates")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-      if (rolesError) throw rolesError;
+  const { data: selectedTaskRuns = [], isLoading: selectedTaskRunsLoading } = useQuery({
+    queryKey: ["task-checklist-runs", selectedTask?.id],
+    queryFn: async () => {
+      if (!selectedTask?.id) return [];
+      const { data, error } = await supabase
+        .from("checklist_runs")
+        .select("*, checklist_templates(name)")
+        .eq("task_id", selectedTask.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedTask?.id,
+  });
 
-      const engineerIds = engineerRoles.map((r) => r.user_id);
-
-      if (engineerIds.length === 0) return [];
-
-      // Fetch profiles for these users
-      const { data: profiles, error: profilesError } = await supabase
+  // Fetch all profiles for assignment
+  const { data: engineers = [] } = useQuery({
+    queryKey: ["all-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
         .from("profiles")
         .select("user_id, full_name, email")
-        .in("user_id", engineerIds)
         .order("full_name");
 
-      if (profilesError) throw profilesError;
-      return profiles;
+      if (error) throw error;
+      return data;
     },
   });
 
   const createTask = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("tasks").insert({
-        title: form.title,
-        description: form.description || null,
-        project_id: form.project_id,
-        status: form.status as any,
-        priority: parseInt(form.priority),
-        due_date: form.due_date || null,
-        assigned_to: form.assigned_to || null,
-        created_by: user?.id,
-      });
+      const { data: newTask, error } = await supabase
+        .from("tasks")
+        .insert({
+          title: form.title,
+          description: form.description || null,
+          project_id: form.project_id,
+          status: form.status as any,
+          priority: parseInt(form.priority),
+          due_date: form.due_date || null,
+          assigned_to: form.assigned_to || null,
+          created_by: user?.id,
+        })
+        .select("id")
+        .single();
+      
       if (error) throw error;
+
+      if (form.checklist_template_id && form.checklist_template_id !== "none" && newTask) {
+        const { data: template, error: templateError } = await supabase
+          .from("checklist_templates")
+          .select("items")
+          .eq("id", form.checklist_template_id)
+          .single();
+
+        if (templateError) throw templateError;
+
+        const templateItems = Array.isArray(template?.items)
+          ? template.items
+          : [];
+
+        const formattedItems = templateItems.map((item: any) => ({
+          ...item,
+          checked: false,
+          notes: "",
+        }));
+
+        const { error: runError } = await supabase
+          .from("checklist_runs")
+          .insert({
+            task_id: newTask.id,
+            project_id: form.project_id,
+            template_id: form.checklist_template_id,
+            completed_items: formattedItems as any,
+            status: "in_progress",
+          });
+
+        if (runError) throw runError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -187,6 +240,7 @@ const AdminTasks = () => {
         priority: "0",
         due_date: "",
         assigned_to: "",
+        checklist_template_id: "",
       });
       toast({ title: "Task created and assigned" });
     },
@@ -326,7 +380,28 @@ const AdminTasks = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Assign To (Engineering / Execution)</Label>
+                <Label>Associated Checklist (Optional)</Label>
+                <Select
+                  value={form.checklist_template_id || "none"}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, checklist_template_id: v === "none" ? "" : v }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select checklist template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {checklistTemplates.map((t: any) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Assign To</Label>
                 <Select
                   value={form.assigned_to}
                   onValueChange={(v) =>
@@ -440,8 +515,14 @@ const AdminTasks = () => {
                 filtered.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell>
-                      <div>
-                        <p className="font-medium">{task.title}</p>
+                      <div 
+                        className="cursor-pointer hover:underline"
+                        onClick={() => {
+                          setSelectedTask(task);
+                          setTaskDetailOpen(true);
+                        }}
+                      >
+                        <p className="font-medium text-primary">{task.title}</p>
                         {task.description && (
                           <p className="text-xs text-muted-foreground truncate max-w-xs">
                             {task.description}
@@ -558,6 +639,93 @@ const AdminTasks = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={taskDetailOpen} onOpenChange={setTaskDetailOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Task Details: {selectedTask?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground">Description</h4>
+              <p className="text-sm mt-1 whitespace-pre-wrap">
+                {selectedTask?.description || "No description provided."}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground">Assigned To</h4>
+                <p className="text-sm mt-1">
+                  {selectedTask?.profile 
+                    ? `${selectedTask.profile.full_name || "Unknown"} (${selectedTask.profile.email})`
+                    : "Unassigned"}
+                </p>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground">Project</h4>
+                <p className="text-sm mt-1">
+                  {selectedTask?.projects?.name || "None"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground">Status</h4>
+                <div className="mt-1">
+                  <StatusBadge status={selectedTask?.status} />
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground">Priority</h4>
+                <p className="text-sm mt-1 font-mono">
+                  P{selectedTask?.priority}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-muted-foreground">Associated Checklist Progress</h4>
+              {selectedTaskRunsLoading ? (
+                <p className="text-sm text-muted-foreground mt-1">Loading checklist details...</p>
+              ) : selectedTaskRuns.length > 0 ? (
+                <div className="space-y-3 mt-2">
+                  {selectedTaskRuns.map((run: any) => {
+                    const runItems = Array.isArray(run.completed_items) ? run.completed_items : [];
+                    const completedCount = runItems.filter((i: any) => i.checked).length;
+                    const totalCount = runItems.length;
+                    return (
+                      <div key={run.id} className="border border-border/60 rounded-lg p-3 bg-muted/20">
+                        <div className="flex justify-between items-center text-sm font-medium">
+                          <span>{run.checklist_templates?.name || "Checklist"}</span>
+                          <span className="text-muted-foreground font-mono text-xs">
+                            {completedCount} / {totalCount} Completed
+                          </span>
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          {runItems.map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center gap-2 text-xs">
+                              <span className={item.checked ? "text-green-600 font-bold" : "text-muted-foreground"}>
+                                {item.checked ? "✓" : "○"}
+                              </span>
+                              <span className={item.checked ? "line-through text-muted-foreground" : ""}>
+                                {item.text}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mt-1">No checklist runs associated with this task.</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
