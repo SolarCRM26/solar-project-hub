@@ -262,6 +262,7 @@ export const TaskPhotoUploader = ({
   };
 
   const getPhotoUrl = (filePath: string) => {
+    if (!filePath) return "";
     const { data } = supabase.storage
       .from("project-documents")
       .getPublicUrl(filePath);

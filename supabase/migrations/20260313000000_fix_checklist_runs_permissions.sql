@@ -1,4 +1,4 @@
--- Fix checklist_runs permissions and auto-complete trigger
+-- Fix checklist_runs permissions, auto-complete trigger, and foreign key relations for profiles
 -- This SQL can be executed in the Supabase SQL editor to apply the fixes without losing data
 
 -- 1. Recreate RLS Policy for checklist_runs to be robust and allow assigned engineers
@@ -82,3 +82,25 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 3. Fix task_comments foreign key to reference profiles instead of auth.users
+-- This allows PostgREST to resolve the relationship for join queries
+ALTER TABLE public.task_comments 
+  DROP CONSTRAINT IF EXISTS task_comments_user_id_fkey;
+
+ALTER TABLE public.task_comments 
+  ADD CONSTRAINT task_comments_user_id_fkey 
+  FOREIGN KEY (user_id) 
+  REFERENCES public.profiles(user_id) 
+  ON DELETE SET NULL;
+
+-- 4. Fix task_photos foreign key to reference profiles instead of auth.users
+-- This allows PostgREST to resolve the relationship for join queries
+ALTER TABLE public.task_photos 
+  DROP CONSTRAINT IF EXISTS task_photos_uploaded_by_fkey;
+
+ALTER TABLE public.task_photos 
+  ADD CONSTRAINT task_photos_uploaded_by_fkey 
+  FOREIGN KEY (uploaded_by) 
+  REFERENCES public.profiles(user_id) 
+  ON DELETE CASCADE;

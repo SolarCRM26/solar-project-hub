@@ -149,7 +149,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
           Execute Task
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col rounded-lg">
+      <DialogContent className="max-w-5xl h-[85vh] min-h-[600px] flex flex-col rounded-lg overflow-hidden">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -160,9 +160,9 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
           </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-            <TabsList className="grid w-full grid-cols-4">
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="grid w-full grid-cols-4 shrink-0">
               <TabsTrigger value="checklist" className="relative">
                 <ClipboardCheck className="h-4 w-4 mr-2" />
                 Checklist
@@ -193,8 +193,8 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
               </TabsTrigger>
             </TabsList>
 
-            <div className="flex-1 overflow-y-auto mt-4">
-              <TabsContent value="checklist" className="mt-0 h-full">
+            <div className="flex-1 min-h-0 overflow-hidden mt-4 flex flex-col">
+              <TabsContent value="checklist" className="mt-0 flex-1 min-h-0 overflow-y-auto pr-1 pb-4">
                 <div className="space-y-4">
                   {taskStatus === 'pending' && (
                     <Card className="bg-warning/10 border-warning/30 shadow-sm">
@@ -247,7 +247,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
                 </div>
               </TabsContent>
 
-              <TabsContent value="photos" className="mt-0">
+              <TabsContent value="photos" className="mt-0 flex-1 min-h-0 overflow-y-auto pr-1 pb-4">
                 {taskStatus === 'pending' ? (
                   <Card className="bg-muted/40 shadow-sm">
                     <CardContent className="py-8 text-center">
@@ -262,11 +262,11 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
                 )}
               </TabsContent>
 
-              <TabsContent value="comments" className="mt-0">
+              <TabsContent value="comments" className="mt-0 flex-1 min-h-0 overflow-hidden data-[state=active]:flex flex-col pb-4">
                 <TaskComments taskId={taskId} />
               </TabsContent>
 
-              <TabsContent value="files" className="mt-0">
+              <TabsContent value="files" className="mt-0 flex-1 min-h-0 overflow-y-auto pr-1 pb-4">
                 {taskStatus === 'pending' ? (
                   <Card className="bg-muted/40 shadow-sm">
                     <CardContent className="py-8 text-center">
@@ -289,7 +289,7 @@ export const TaskExecutionTabs = ({ taskId, projectId, taskTitle, taskStatus }: 
 
         {/* Action Footer */}
         {taskStatus !== 'completed' && (
-          <div className="border-t pt-4 mt-4 flex items-center justify-between">
+          <div className="border-t pt-4 mt-4 flex items-center justify-between shrink-0">
             <div className="text-sm text-muted-foreground">
               {!hasCompletedChecklist && checklistRuns.length > 0 && (
                 <span className="flex items-center gap-2 text-warning">

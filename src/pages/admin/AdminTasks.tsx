@@ -52,7 +52,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TaskComments } from "@/components/TaskComments";
-import { ChecklistRunner } from "@/components/ChecklistRunner";
+import { TaskExecutionTabs } from "@/components/TaskExecutionTabs";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -560,9 +560,11 @@ const AdminTasks = () => {
                     <TableCell>{task.due_date || "—"}</TableCell>
                     <TableCell>
                       <div className="flex items-center justify-end gap-2">
-                        <ChecklistRunner
+                        <TaskExecutionTabs
                           taskId={task.id}
                           projectId={task.project_id}
+                          taskTitle={task.title}
+                          taskStatus={task.status}
                         />
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
